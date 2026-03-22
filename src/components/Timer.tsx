@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from "react";
 
 export const Timer: React.FC<{ endsAt: string }> = ({ endsAt }) => {
   const [timeLeft, setTimeLeft] = useState(0);
-  const totalDuration = 180; // 3 minutes in seconds
+  const totalDuration = 180;
 
   useEffect(() => {
     const calc = () => {
@@ -15,19 +15,18 @@ export const Timer: React.FC<{ endsAt: string }> = ({ endsAt }) => {
   }, [endsAt]);
 
   const percentage = (timeLeft / totalDuration) * 100;
-  const isUrgent = timeLeft < 30;
 
   return (
-    <div className="w-full mb-8">
-      <div className="flex justify-between items-end mb-2">
-        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Time Remaining</span>
-        <span className={`text-4xl font-mono font-black ${isUrgent ? 'text-red-500 animate-pulse' : 'text-indigo-600'}`}>
+    <div className="w-full mb-4"> 
+      <div className="flex justify-between items-baseline mb-1">
+        <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Live Clock</span>
+        <span className={`text-3xl font-mono font-black ${timeLeft < 30 ? 'text-red-500 animate-pulse' : 'text-indigo-600'}`}>
           {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
         </span>
       </div>
-      <div className="h-3 w-full bg-gray-200 rounded-full overflow-hidden shadow-inner">
+      <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
         <div 
-          className={`h-full transition-all duration-1000 ease-linear rounded-full ${isUrgent ? 'bg-red-500' : 'bg-indigo-500'}`}
+          className={`h-full transition-all duration-1000 ease-linear ${timeLeft < 30 ? 'bg-red-500' : 'bg-indigo-500'}`}
           style={{ width: `${percentage}%` }}
         />
       </div>
