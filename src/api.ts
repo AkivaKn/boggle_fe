@@ -1,5 +1,6 @@
-const API_BASE = "http://localhost:8080";
-const WS_BASE = "ws://localhost:8080";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080";
+
+const WS_BASE = API_BASE.replace(/^http/, 'ws');
 
 export interface Board {
   letters: string;
