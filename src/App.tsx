@@ -57,15 +57,17 @@ function App() {
     };
   };
 
-  const handleStartGame = async () => {
-    if (roomId) {
+ const handleStartGame = async () => {
+  if (roomId) {
+    setTimeout(async () => {
       try {
         await startNewGame(roomId);
-      } catch (err) {
+      } catch {
         addLog("Error starting game.");
       }
-    }
-  };
+    }, 1000); // 1 second delay
+  }
+};
 
   const handleLeave = () => {
     if (wsRef.current) wsRef.current.close();
@@ -135,7 +137,7 @@ useEffect(() => {
               <div className="flex flex-col gap-2">
                 <input
                   className="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl focus:border-indigo-500 outline-none transition-all font-mono text-sm"
-                  placeholder="Enter Room UUID..."
+                  placeholder="Enter Room ID..."
                   value={joinInput}
                   onChange={(e) => setJoinInput(e.target.value)}
                 />

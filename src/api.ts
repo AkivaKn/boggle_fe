@@ -17,7 +17,6 @@ export const startNewGame = async (roomId: string) => {
   const res = await fetch(`${API_BASE}/api/rooms/${roomId}/boards`, { 
     method: 'POST' 
   });
-    console.log(res)
   if (!res.ok) throw new Error('Failed to start game');
   return res.json();
 };
