@@ -57,17 +57,17 @@ function App() {
     };
   };
 
- const handleStartGame = async () => {
-  if (roomId) {
-    setTimeout(async () => {
-      try {
-        await startNewGame(roomId);
-      } catch {
-        addLog("Error starting game.");
-      }
-    }, 1000); // 1 second delay
-  }
-};
+  const handleStartGame = async () => {
+    if (roomId) {
+      setTimeout(async () => {
+        try {
+          await startNewGame(roomId);
+        } catch {
+          addLog("Error starting game.");
+        }
+      }, 1000); // 1 second delay
+    }
+  };
 
   const handleLeave = () => {
     if (wsRef.current) wsRef.current.close();
@@ -88,22 +88,22 @@ function App() {
   };
 
   useEffect(() => {
-  const interval = setInterval(() => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ event: "ping" }));
-    }
-  }, 30000);
+    const interval = setInterval(() => {
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({ event: "ping" }));
+      }
+    }, 30000);
 
-  return () => {
-    clearInterval(interval);
-  };
-}, [roomId]);
+    return () => {
+      clearInterval(interval);
+    };
+  }, [roomId]);
 
-useEffect(() => {
-  return () => {
-    if (wsRef.current) wsRef.current.close();
-  };
-}, []);
+  useEffect(() => {
+    return () => {
+      if (wsRef.current) wsRef.current.close();
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 font-sans selection:bg-indigo-100">
