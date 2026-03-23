@@ -66,7 +66,7 @@ function App() {
         } catch {
           addLog("Error starting game.");
         }
-      }, 1000); // 1 second delay
+      }, 500); // 1/2 second delay
     }
   };
 
@@ -94,7 +94,7 @@ function App() {
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         wsRef.current.send(JSON.stringify({ event: "ping" }));
       }
-    }, 30000);
+    }, 10000);
 
     return () => {
       clearInterval(interval);
@@ -197,7 +197,7 @@ function App() {
                 </button>
               </div>
 
-              {!board ? (
+              {!board || board.length === 0 ? (
                 <div className="py-12 flex flex-col items-center border-4 border-dashed border-slate-50 rounded-3xl">
                   <div className="text-5xl mb-4 grayscale opacity-20">🎲</div>
                   <p className="text-slate-400 text-sm mb-8 text-center px-4">

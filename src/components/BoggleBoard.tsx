@@ -1,13 +1,25 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import type { Die } from "../api";
 
-const ambiguousLetters = new Set(["M", "W", "Z", "N", "S"]);
+const ambiguousLetters = new Set(["M", "W", "Z", "N", "C"]);
 
 export const BoggleBoard: React.FC<{ board: Die[] }> = ({ board }) => {
   const dice = board.slice(0, 16);
 
+  // Use state for board rotation
+  const [boardRotation, setBoardRotation] = useState(0);
+
+  useEffect(() => {
+    // When the board changes, pick a new random rotation
+    const angles = [0, 90, 180, 270];
+    setBoardRotation(angles[Math.floor(Math.random() * angles.length)]);
+  }, [board]);
+
   return (
-    <div className="inline-grid grid-cols-4 gap-1.5 sm:gap-3 p-2 sm:p-4 bg-slate-300 rounded-[2rem] shadow-[inset_0_4px_8px_rgba(0,0,0,0.15)]">
+    <div
+      style={{ transform: `rotate(${boardRotation}deg)` }}
+      className="inline-grid grid-cols-4 gap-1.5 sm:gap-3 p-2 sm:p-4 bg-slate-300 rounded-[2rem] shadow-[inset_0_4px_8px_rgba(0,0,0,0.15)] transition-transform"
+    >
       {dice.map((die, index) => (
         <div
           key={index}
