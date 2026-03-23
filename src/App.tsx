@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { getWsUrl, startNewGame, type WsMessage } from "./api";
+import { getWsUrl, startNewGame, type Die, type WsMessage } from "./api";
 import { BoggleBoard } from "./components/BoggleBoard";
 import { Timer } from "./components/Timer";
 
@@ -7,7 +7,7 @@ function App() {
   const [roomId, setRoomId] = useState<string | null>(
     localStorage.getItem("roomId"),
   );
-  const [board, setBoard] = useState<string>("");
+  const [board, setBoard] = useState<Die[]>([]);
   const [endsAt, setEndsAt] = useState<string>("");
   const [joinInput, setJoinInput] = useState<string>("");
   const [logs, setLogs] = useState<string[]>([]);
@@ -52,7 +52,7 @@ function App() {
     };
 
     ws.onclose = () => {
-      setBoard("");
+      setBoard([]);
       setEndsAt("");
       addLog("Disconnected.");
     };
@@ -73,7 +73,7 @@ function App() {
   const handleLeave = () => {
     if (wsRef.current) wsRef.current.close();
     setRoomId(null);
-    setBoard("");
+    setBoard([]);
     setEndsAt("");
     setJoinInput("");
     setLogs([]);

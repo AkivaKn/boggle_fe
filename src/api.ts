@@ -1,23 +1,28 @@
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
-const WS_BASE = API_BASE.replace(/^http/, 'ws');
+const WS_BASE = API_BASE.replace(/^http/, "ws");
 
 export interface Board {
   letters: string;
   ends_at: string;
 }
 
-export type WsMessage = 
-  | { event: 'room_created'; room_id: string }
-  | { event: 'room_state'; room_id: string; board?: string; ends_at?: string }
-  | { event: 'new_board'; board: string; ends_at: string }
-  | { event: 'player_joined'; message: string };
+export interface Die {
+  letter: string;
+  orientation: number;
+}
+
+export type WsMessage =
+  | { event: "room_created"; room_id: string }
+  | { event: "room_state"; room_id: string; board?: Die[]; ends_at?: string }
+  | { event: "new_board"; board: Die[]; ends_at: string }
+  | { event: "player_joined"; message: string };
 
 export const startNewGame = async (roomId: string) => {
-  const res = await fetch(`${API_BASE}/api/rooms/${roomId}/boards`, { 
-    method: 'POST' 
+  const res = await fetch(`${API_BASE}/api/rooms/${roomId}/boards`, {
+    method: "POST",
   });
-  if (!res.ok) throw new Error('Failed to start game');
+  if (!res.ok) throw new Error("Failed to start game");
   return res.json();
 };
 
