@@ -4,7 +4,9 @@ import { BoggleBoard } from "./components/BoggleBoard";
 import { Timer } from "./components/Timer";
 
 function App() {
-  const [roomId, setRoomId] = useState<string | null>(null);
+  const [roomId, setRoomId] = useState<string | null>(
+    localStorage.getItem("roomId"),
+  );
   const [board, setBoard] = useState<string>("");
   const [endsAt, setEndsAt] = useState<string>("");
   const [joinInput, setJoinInput] = useState<string>("");
@@ -50,7 +52,6 @@ function App() {
     };
 
     ws.onclose = () => {
-      setRoomId(null);
       setBoard("");
       setEndsAt("");
       addLog("Disconnected.");
@@ -76,6 +77,7 @@ function App() {
     setEndsAt("");
     setJoinInput("");
     setLogs([]);
+    localStorage.removeItem("roomId");
   };
 
   const copyRoomId = () => {
@@ -104,6 +106,27 @@ function App() {
       if (wsRef.current) wsRef.current.close();
     };
   }, []);
+
+  useEffect(() => {
+    // On mount, check for saved roomId
+    const savedRoomId = localStorage.getItem("roomId");
+    if (savedRoomId) {
+      connect(savedRoomId);
+    }
+    // Cleanup on unmount
+    return () => {
+      if (wsRef.current) wsRef.current.close();
+    };
+  }, []);
+
+  useEffect(() => {
+    // Save roomId to localStorage when it changes
+    if (roomId) {
+      localStorage.setItem("roomId", roomId);
+    } else {
+      localStorage.removeItem("roomId");
+    }
+  }, [roomId]);
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 font-sans selection:bg-indigo-100">
