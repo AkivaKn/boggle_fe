@@ -18,17 +18,17 @@ export const BoggleBoard: React.FC<{ board: Die[] }> = ({ board }) => {
   return (
     <div
       style={{ transform: `rotate(${boardRotation}deg)` }}
-      className="inline-grid grid-cols-4 gap-1.5 sm:gap-3 p-2 sm:p-4 bg-slate-300 rounded-[2rem] shadow-[inset_0_4px_8px_rgba(0,0,0,0.15)] transition-transform"
+      className="w-full h-full inline-grid grid-cols-4 gap-1 sm:gap-2 p-2 sm:p-4 bg-slate-300 rounded-[2rem] shadow-[inset_0_4px_8px_rgba(0,0,0,0.15)] transition-transform"
     >
       {dice.map((die, index) => (
         <div
           key={index}
           style={{ transform: `rotate(${die.orientation}deg)` }}
-          className="relative aspect-square w-12 h-12 sm:w-16 sm:h-16 
-                     bg-white rounded-xl shadow-[0_5px_0_0_#cbd5e1,0_10px_15px_-3px_rgba(0,0,0,0.2)]
+          className="relative aspect-square 
+                     bg-white rounded-xl 
                      flex items-center justify-center border-t border-slate-50 transition-transform"
         >
-          <span className="text-2xl sm:text-4xl font-black text-slate-800 select-none uppercase tracking-tighter relative flex flex-col items-center">
+          <span className="text-3xl sm:text-5xl font-black text-slate-800 select-none uppercase tracking-tighter relative flex flex-col items-center">
             {die.letter === "Q" ? (
               <span className="flex items-baseline">
                 Q<span className="text-base sm:text-xl">u</span>
