@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { GBP } from "../api";
 import { MoneyLadder } from "./MoneyLadder";
 
@@ -61,13 +61,17 @@ const FALL_DROP_AT_MS = 200;
 const FALL_SETTLE_AT_MS = 620;
 /** t=1s — the fall overlay's "see results" affordance fades in (solo hold). */
 const FALL_RESULTS_AT_MS = 1000;
-/** Where the rung you are on sits in the window (fraction of window height).
- *  0.62 keeps THREE things readable at once: the ladder still to win above
- *  you, your rung lit at the focal line, and the rung you just banked fully in
- *  frame BELOW it (the frame shows ~5.5 big rungs, so a lower focal line would
- *  let the mask fade eat the banked rung — the wave-3c audit caught exactly
- *  that milky half-rung). */
-const FOCAL = 0.62;
+/**
+ * Where the rung you are on sits in the window (fraction of window height).
+ *
+ * 0.7 keeps THREE things readable at once: the ladder still to win above you
+ * (~5 rungs), your rung lit at the focal line, and the rung you just banked
+ * fully in frame BELOW it. Lower values push the banked rung toward the mask
+ * fade (the wave-3c audit caught exactly that milky half-rung); the M-B pass
+ * found 0.62 left a band of dead space under the ladder at its floor. The
+ * last rung overrides this to hug the frame's bottom edge (see solveCamera).
+ */
+const FOCAL = 0.7;
 /** The fall's stumble depth (px) — a visible jolt, settled back at FALL_SETTLE. */
 const FALL_JOLT_PX = 20;
 /** The camera slides are the 400ms rise-family easing (a hair of overshoot on
@@ -140,38 +144,47 @@ export const RevealTree: React.FC<RevealTreeProps> = ({
   const winRef = useRef<HTMLDivElement | null>(null);
   const treeRef = useRef<HTMLDivElement | null>(null);
 
-  // Measure the ladder's real geometry, then solve the camera. Runs in a LAYOUT
-  // effect → it flushes before the browser's first paint (a measurement, not a
-  // transition), so phase 1 already paints the "where you were" framing and the
-  // slide always starts from a real painted state. The camera is clamped to the
-  // track's ends, so level 1 (the ladder's floor) and level 15 (its top) frame
-  // honestly instead of sliding into empty space.
-  useLayoutEffect(() => {
+  // Solve the camera. Runs in a LAYOUT effect → it flushes before the first
+  // paint (a measurement, not a transition), so phase 1 already paints the
+  // "where you were" framing and the slide always starts from a real painted
+  // state. The camera is clamped to the track's ends, so level 1 (the ladder's
+  // floor) and level 15 (its top) frame honestly instead of sliding into empty
+  // space.
+  //
+  // GEOMETRY IS DERIVED, NOT MEASURED PER RUNG (M-B audit): this used to read
+  // each rung's `offsetTop`, and the mount-time read caught the ladder BEFORE
+  // it reached its final layout — the rungs were ~74px tall instead of their
+  // settled ~62px, so the camera was solved 160px off and the frame showed a
+  // 280px band of dead space under the ladder (the "zoomed into part of the
+  // ladder" report). The ladder is UNIFORM, so one number (the track height)
+  // plus the rung count gives every position exactly — and `reframe` below
+  // re-solves whenever the real geometry changes (viewport resize, orientation,
+  // a late font/CSS settle), so a stale solve can never survive.
+  const solveCamera = useCallback((): { from: number; to: number } | null => {
     const win = winRef.current;
     const track = treeRef.current;
-    if (!win || !track) return;
-    const tops = new Map<number, number>();
-    track.querySelectorAll<HTMLElement>("[data-rung]").forEach((el) => {
-      tops.set(Number(el.dataset.rung), el.offsetTop);
-    });
+    if (!win || !track) return null;
+    const rows = track.querySelectorAll<HTMLElement>("[data-rung]");
+    const count = rows.length;
+    if (count === 0) return null;
     const H = win.clientHeight;
     const trackH = track.offsetHeight;
-    if (H < 40 || trackH <= H) return; // nothing to travel — leave unframed
+    if (H < 40 || trackH <= H) return null; // nothing to travel — leave unframed
+    const pitch = trackH / count;
+    const first = rows[0];
+    const base = first.offsetTop; // the track's own top edge
+    const rungH = first.offsetHeight;
     const focal = H * FOCAL;
-    const rungH =
-      track.querySelector<HTMLElement>("[data-rung]")?.offsetHeight ?? 0;
-    const lastLevel = tops.size ? Math.max(...tops.keys()) : 0;
+    const topOf = (lvl: number): number | null =>
+      lvl >= 1 && lvl <= count ? base + (count - lvl) * pitch : null;
     const camFor = (lvl: number): number | null => {
-      const top = tops.get(lvl);
-      if (top === undefined) return null;
+      const top = topOf(lvl);
+      if (top === null) return null;
       // The BOTTOM rung sits lower in the frame than the standard focal line
-      // (it IS the ladder's floor — holding it at 0.62 left ~230px of dead
-      // space beneath it, which read as broken layout). It still keeps a
-      // floor's worth of travel into level 2.
-      const line =
-        lvl === lastLevel
-          ? Math.min(focal, H - rungH - 10)
-          : focal;
+      // (it IS the ladder's floor — holding it at the focal line left a band
+      // of dead space beneath it, which read as broken layout). It still keeps
+      // a floor's worth of travel into level 2.
+      const line = lvl === count ? Math.min(focal, H - rungH - 10) : focal;
       // Only the TOP of the ladder clamps (never show sky above rung 15 — as
       // you near the top the framing settles and the rung rises within the
       // frame instead). The BOTTOM deliberately does NOT clamp: clamping to
@@ -180,14 +193,48 @@ export const RevealTree: React.FC<RevealTreeProps> = ({
       return Math.min(0, line - top);
     };
     const here = camFor(level);
-    if (here === null) return;
+    if (here === null) return null;
     // Rise: camera up one rung (the tree flows down past you). Level 15 is the
     // top of the ladder — there is nowhere higher, so it lands in place.
     // Fall: the framing HOLDS on the failed rung (it shatters where you stood)
     // and the stumble jolt is added as a transient offset.
     const nextUp = rise && level < 15 ? camFor(level + 1) : null;
-    setCam({ from: here, to: nextUp ?? here });
+    return { from: here, to: nextUp ?? here };
   }, [rise, level]);
+
+  // Paint the solved camera before the first frame...
+  useLayoutEffect(() => {
+    // DELIBERATE: measuring the ladder and laying the camera down BEFORE the
+    // first paint is the entire point of a layout effect. Doing it in a
+    // passive effect would paint one frame at the un-framed offset and then
+    // jump — which is exactly the artefact this choreography exists to
+    // eliminate (and which a previous "avoid setState in effects" reading
+    // would reintroduce).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCam(solveCamera());
+  }, [solveCamera]);
+
+  // ...and keep it honest: if the real geometry changes after mount (viewport
+  // resize, orientation change, a late CSS/font settle), re-solve. Once the
+  // climb has been triggered the framing is FROZEN — moving the camera
+  // mid-animation would be the exact "it jumps" artefact this whole pass
+  // exists to remove.
+  useEffect(() => {
+    const win = winRef.current;
+    const track = treeRef.current;
+    if (!win || !track || typeof ResizeObserver === "undefined") return;
+    let frozen = false;
+    const ro = new ResizeObserver(() => {
+      if (frozen) return;
+      setCam(solveCamera());
+    });
+    ro.observe(win);
+    ro.observe(track);
+    return () => {
+      frozen = true;
+      ro.disconnect();
+    };
+  }, [solveCamera]);
 
   // RISE phase 2: after the double rAF proves the phase-1 frame painted, slide
   // the camera up one rung; the landing beat banks the rung + lights the next.
@@ -290,9 +337,22 @@ export const RevealTree: React.FC<RevealTreeProps> = ({
           <div
             ref={treeRef}
             className={`tree-track w-full ${
-              rise && go && !landed ? "tree-climbing" : ""
+              rise
+                ? go && !landed
+                  ? "tree-climbing"
+                  : ""
+                : fallGo && !fallSettled
+                  ? "tree-stumbling"
+                  : ""
             }`}
             style={
+              // `cam` is null whenever the WHOLE ladder already fits the
+              // frame — which is the normal case now that all fifteen rungs
+              // are always visible. In that mode there is no camera to move
+              // and the choreography runs entirely on the CSS classes
+              // (tree-lift on a rise, tree-stumble on a fall). The inline
+              // transform is kept ONLY for the short-viewport fallback where
+              // the ladder genuinely overflows and must be scrolled.
               !cam
                 ? undefined
                 : rise

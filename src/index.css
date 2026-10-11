@@ -308,47 +308,90 @@
   }
 }
 
+/* M-B — ALL FIFTEEN rungs are always visible, so a one-rung slide is only
+   ~40px: too small to carry the climb on its own (that was the wave-2/3 bug —
+   a nudge whose only visible effect was a glow disappearing). The climb is
+   therefore carried by the CHOREOGRAPHY, and this is the piece that makes it
+   unmistakable:
+
+   the whole ladder LIFTS on a spring as the rung hands off — it scales up from
+   the rung you just banked and settles back, so every rung visibly moves and
+   grows rather than sliding a couple of pixels. The travel is small, but the
+   SCALE change reads at any distance, which is what "climbing" actually looks
+   like when the whole ladder has to stay on screen. */
+.tree-track {
+  transform-origin: 50% 100%;
+  will-change: transform;
+}
+.tree-climbing {
+  animation: tree-lift 620ms cubic-bezier(0.34, 1.3, 0.64, 1) both;
+}
+@keyframes tree-lift {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  38% {
+    transform: translateY(0) scale(1.045);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* The fall keeps its own character: the ladder STUMBLES — it drops and
+   recovers, while the rung you failed shatters where you stood. Same
+   reasoning as the lift: the travel is small when every rung is on screen,
+   so the motion is carried by the transform, not by scrolling. */
+.tree-stumbling {
+  animation: tree-stumble 560ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+@keyframes tree-stumble {
+  0% {
+    transform: translateY(0);
+  }
+  22% {
+    transform: translateY(14px) scale(0.985);
+  }
+  55% {
+    transform: translateY(-5px) scale(1.004);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
 /* Wave 3c — the reveal overlay is a CAMERA, not a poster of the whole
    ladder. Waves 2/3/3b crammed all 15 rungs into the overlay (a ~44px pitch
    on a 390×844 phone) and then "climbed" by exactly one of those pitches —
    a 6%-of-the-window nudge whose only visible consequence was the current
    rung's glow being deleted at the landing.
 
-   `.tree-window` is now a FIXED-height frame (~5.5 big rungs) that the ladder
+   `.tree-window` is now a FIXED-height frame (~7.5 rungs) that the ladder
    track runs through; RevealTree solves the camera offset against the real
    measured geometry (clamped at both ends of the track) and slides it, so
    the climb travels the ladder instead of nudging inside a still frame.
-   `.tree-ladder .hex-shape` therefore sizes each rung for LEGIBILITY at a
-   ~5.5-rung framing rather than shrinking 15 of them to fit. */
+   `.tree-ladder .hex-shape` sizes each rung so one rung of travel is
+   unmistakable MOTION while the frame still shows enough of the ladder that
+   the shape of the climb is readable — the earlier ~5-rung framing read as
+   "zoomed into part of the ladder" (user report, M-B). */
 .tree-window {
   width: clamp(230px, 82vw, 320px);
-  height: clamp(300px, 56svh, 520px);
+  /* ALL FIFTEEN rungs, always (user requirement, M-B): the frame is sized by
+     its content, so the whole ladder is on screen at every level and the
+     money above you is always visible. This caps a one-rung slide at ~40px,
+     so the CLIMB is carried by the choreography — the rung handoff (banked
+     rung turns gold + the next lights) plus a scale pulse — not by a big
+     translate. See `.tree-track` / `.tree-climbing`. */
   overflow: hidden;
-  /* Soft top/bottom edges so rungs enter and leave the frame deliberately —
-     gentle enough that the rung you banked (one below the focal line) is never
-     half-eaten by the fade. */
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    transparent 0,
-    #000 7%,
-    #000 93%,
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    to bottom,
-    transparent 0,
-    #000 7%,
-    #000 93%,
-    transparent 100%
-  );
 }
 .tree-ladder .hex-shape {
-  /* One rung ≈ 1/5.5 of the frame: chunky, readable, and a full rung of
-     travel per answer is now unmistakably motion (not 6% of the screen). */
-  padding-top: clamp(14px, 3.4svh, 30px);
-  padding-bottom: clamp(14px, 3.4svh, 30px);
-  font-size: clamp(1rem, 2.6svh, 1.25rem);
-  line-height: 1.4;
+  /* All 15 rungs must fit the frame, so the pitch is derived from the
+     viewport rather than chosen for chunkiness: ~4.4svh per rung × 15 ≈ 66svh
+     of ladder, leaving room for the counter, the chip and CONTINUE. */
+  padding-top: clamp(3px, 0.62svh, 9px);
+  padding-bottom: clamp(3px, 0.62svh, 9px);
+  font-size: clamp(0.8125rem, 1.85svh, 1.0625rem);
+  line-height: 1.3;
 }
 .tree-ladder .anim-ladder-in {
   animation: none;
