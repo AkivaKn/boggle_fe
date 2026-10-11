@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import type { Die } from "../api";
+import type { Die } from "../boggleApi";
 
 const ambiguousLetters = new Set(["M", "W", "Z", "N", "C"]);
 

@@ -3,8 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>boggle_fe</title>
+    <!-- PWA "add to home screen" basics + safe-area (viewport-fit) — the
+         mobile-first requirement applies to the hub too. -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <!-- M-B: the hub serves every game from this one document; the title is
+         the product, not a single game. -->
+    <title>Games — Boggle &amp; Millionaire</title>
+    <meta name="theme-color" content="#06061f" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
   </head>
   <body>
     <div id="root"></div>

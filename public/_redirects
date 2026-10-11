@@ -1,0 +1,5 @@
+# SPA history fallback — the hub serves /boggle and /millionaire as ROUTES of
+# one SPA, so a deep link (or a refresh inside a game) must return index.html
+# rather than 404. This is what makes the single Netlify endpoint work for
+# every route without touching the build command or publish dir.
+/*    /index.html   200

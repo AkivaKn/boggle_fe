@@ -1,1 +1,521 @@
 @import "tailwindcss";
+
+/*
+ * UX v3 design system (docs/plan/v3-ux-plan.md — user-approved 2026-10-11).
+ *
+ * Surfaces: the M5 Stage palette stays (deep-blue stage, gold accent); the
+ * semantic state-family tokens (--ink/--plate/--safe/--danger/--muted) pair
+ * with it — every text token here reads ≥4.5:1 on ink/plate.
+ * Type scale is FIXED at 12/14/16/20/28/40 (text-xs/sm/base/xl/2xl/4xl); the
+ * off-scale steps are cleared below so the scale cannot drift. Spacing rides
+ * an 8px rhythm (Tailwind's 4px base — use EVEN steps only).
+ * Motion: 250ms ease-out for state families, 400ms for money/rise, shake ONLY
+ * for errors. System serif stack for the masthead — NO external fonts.
+ */
+@theme {
+  /* Stage surfaces (M5 palette, unchanged — bg-stage-* utilities). */
+  --color-stage-700: #2a2a8f;
+  --color-stage-800: #1e1e7a;
+  --color-stage-900: #14145f;
+  --color-stage-950: #0b0b3b;
+  --color-stage-void: #06061f;
+
+  /* Gold accent scale. */
+  --color-gold-200: #f7e7b0;
+  --color-gold-300: #f0d98a;
+  --color-gold-400: #e3c25c;
+  --color-gold-500: #d4af37;
+  --color-gold-600: #a8842a;
+  --color-gold-700: #7a611e;
+
+  /* Semantic state-family tokens (pairs ≥4.5:1 on --ink/--plate). */
+  --color-ink: #06061f; /* deepest surface (page) */
+  --color-plate: #0b0b3b; /* raised plate surface */
+  --color-safe: #34d399; /* success */
+  --color-danger: #fb7185; /* danger */
+  --color-muted: #94a3b8; /* muted text */
+
+  --font-display: Georgia, "Times New Roman", "Palatino Linotype", serif;
+
+  /* Fixed type scale: 12 / 14 / 16 / 20 / 28 / 40. */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.5;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.5;
+  --text-base: 1rem;
+  --text-base--line-height: 1.6;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.4;
+  --text-2xl: 1.75rem;
+  --text-2xl--line-height: 1.25;
+  --text-4xl: 2.5rem;
+  --text-4xl--line-height: 1.15;
+
+  /* Off-scale steps removed — the scale above is exhaustive. */
+  --text-3xl: initial;
+  --text-5xl: initial;
+  --text-6xl: initial;
+  --text-lg: initial;
+
+  /* 8px spacing rhythm (Tailwind 0.25rem base — even steps only). */
+  --spacing: 0.25rem;
+
+  /* Motion durations: quick = state families, rise = money/tree motion. */
+  --motion-quick: 250ms;
+  --motion-rise: 400ms;
+}
+
+/*
+ * Full-screen stage: layered radial spotlights over the deep-blue wash,
+ * plus the low-opacity hexagon tile floor (inline SVG data-URI — no assets,
+ * no network). Gold hues at single-digit opacity keep it a *subtle* texture.
+ */
+.stage-bg {
+  min-height: 100vh;
+  background-color: #06061f;
+  background-image:
+    radial-gradient(
+      ellipse 90% 55% at 50% -12%,
+      rgba(230, 200, 110, 0.14),
+      transparent 62%
+    ),
+    radial-gradient(
+      ellipse 70% 60% at 50% 8%,
+      rgba(42, 42, 143, 0.55),
+      transparent 70%
+    ),
+    radial-gradient(ellipse at 50% 0%, #14145f 0%, #0b0b3b 55%, #06061f 100%);
+}
+
+.hex-floor {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cg fill='%23d4af37' fill-opacity='0.055' fill-rule='evenodd'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 28px 49px;
+  mask-image: linear-gradient(to bottom, black 0%, transparent 85%);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 85%);
+}
+
+/*
+ * Hexagon geometry — the show's six-sided tiles (pointed left/right ends).
+ * clip-path clips box-shadows, so every glow is a `filter: drop-shadow` on
+ * a WRAPPER (applied after the child's clip → glow follows the hexagon).
+ */
+.hex-shape {
+  clip-path: polygon(
+    0% 50%,
+    7% 0%,
+    93% 0%,
+    100% 50%,
+    93% 100%,
+    7% 100%
+  );
+}
+
+/* Glowing wrappers (ladder current rung, locked podium, lifeline circles). */
+.glow-current {
+  animation: glow-pulse 1.6s ease-in-out infinite;
+}
+@keyframes glow-pulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 3px rgba(251, 191, 36, 0.45));
+  }
+  50% {
+    filter: drop-shadow(0 0 12px rgba(251, 191, 36, 0.9));
+  }
+}
+
+.glow-lifeline {
+  filter: drop-shadow(0 0 6px rgba(212, 175, 55, 0.45));
+}
+.glow-lifeline:hover {
+  filter: drop-shadow(0 0 11px rgba(212, 175, 55, 0.75));
+}
+
+/* Selected/locked podium: hold-pulse on the glow while awaiting the result. */
+.glow-locked {
+  animation: glow-pulse 0.9s ease-in-out infinite;
+}
+
+/* Correct/wrong reveal glow (stronger, steady). */
+.glow-correct {
+  filter: drop-shadow(0 0 12px rgba(52, 211, 153, 0.7));
+}
+.glow-wrong {
+  filter: drop-shadow(0 0 12px rgba(244, 63, 94, 0.7));
+}
+
+/* UX v3 motion: shake is for ERRORS ONLY (invalid join submit). */
+.anim-shake {
+  animation: shake var(--motion-rise) ease-in-out both;
+}
+@keyframes shake {
+  10%,
+  90% {
+    transform: translateX(-1px);
+  }
+  20%,
+  80% {
+    transform: translateX(2px);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translateX(-4px);
+  }
+  40%,
+  60% {
+    transform: translateX(4px);
+  }
+}
+
+/* Bottom sheet (rival panel) rises with the 400ms rise duration. */
+.anim-sheet-rise {
+  animation: sheet-rise var(--motion-rise) cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes sheet-rise {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Ladder entrance. */
+.anim-ladder-in {
+  opacity: 0;
+  animation: ladder-in 0.45s ease-out forwards;
+}
+@keyframes ladder-in {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.anim-fade-in {
+  animation: fade-in var(--motion-quick) ease-out both;
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* CONTINUE affordance: rises gently into place once the beat has passed. */
+.anim-continue {
+  animation: continue-rise 0.7s ease-out both;
+}
+@keyframes continue-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Won screen: slow trophy shimmer pulse. */
+.anim-trophy {
+  animation: trophy-glow 2.2s ease-in-out infinite;
+}
+@keyframes trophy-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.5));
+  }
+  50% {
+    filter: drop-shadow(0 0 22px rgba(212, 175, 55, 0.95));
+  }
+}
+
+/*
+ * UX v3 wave 2/3/3b — the money-tree reveal overlay (answer lifecycle).
+ * WAVE 3B (the climb must be VISIBLE — the mount/paint race fix):
+ *   - the overlay ENTRANCE is the money moment: the whole panel rises in
+ *     from the BOTTOM edge over the 400ms rise family, ALREADY showing
+ *     the OLD rung picture (the reveal tree paints with NO transform —
+ *     RevealTree only fires the climb after a double requestAnimationFrame
+ *     proves that frame painted; no CSS transition ever starts in the
+ *     mount render);
+ *   - the tree's one-rung climb is the inline two-phase transform (old→new
+ *     offsets, 400ms — genuinely animated between two painted states), the
+ *     amber "current" glow fades during it (.tree-climbing) and the landing
+ *     flares the secured rung gold (the new rung's glow ramps);
+ *   - the fall keeps the slide-down + red shatter with the same two-phase
+ *     mount (static red paint first, slide-down + shatter on the trigger);
+ *   - the overlay ladder (.tree-ladder) reads BIGGER (CSS-clamped rung
+ *     pitch, clear on mobile) and skips the entrance stagger so the first
+ *     painted frame holds the complete old-rung state.
+ * Wave 2's ring/skip countdown is REMOVED (dead) along with anim-tree-rise
+ * and the wave-2 anim-tree-fall (the fall slide is the inline trigger now).
+ */
+.anim-overlay-rise {
+  animation: overlay-rise var(--motion-rise) cubic-bezier(0.22, 1, 0.36, 1)
+    both;
+}
+@keyframes overlay-rise {
+  from {
+    opacity: 0;
+    transform: translateY(55%);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The fall overlay enters as a plain fade — the tree itself is fully
+   painted (target rung static red) and its slide-down is the wave-3b
+   inline trigger AFTER the mount frame paints (two-phase mount). */
+.anim-overlay-fall {
+  animation: overlay-fall 250ms ease-out both;
+}
+@keyframes overlay-fall {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Wave 3b — while the tree translates up, the in-play rung's amber
+   "current" pulse fades out; the landing's gold flare ramps the NEW
+   rung's glow in its place (the old→new glow crossfade). */
+.tree-climbing .glow-current {
+  animation: glow-out var(--motion-rise) ease-out both;
+}
+@keyframes glow-out {
+  from {
+    filter: drop-shadow(0 0 12px rgba(251, 191, 36, 0.9));
+  }
+  to {
+    filter: drop-shadow(0 0 2px rgba(251, 191, 36, 0.05));
+  }
+}
+
+/* Wave 3c — the reveal overlay is a CAMERA, not a poster of the whole
+   ladder. Waves 2/3/3b crammed all 15 rungs into the overlay (a ~44px pitch
+   on a 390×844 phone) and then "climbed" by exactly one of those pitches —
+   a 6%-of-the-window nudge whose only visible consequence was the current
+   rung's glow being deleted at the landing.
+
+   `.tree-window` is now a FIXED-height frame (~5.5 big rungs) that the ladder
+   track runs through; RevealTree solves the camera offset against the real
+   measured geometry (clamped at both ends of the track) and slides it, so
+   the climb travels the ladder instead of nudging inside a still frame.
+   `.tree-ladder .hex-shape` therefore sizes each rung for LEGIBILITY at a
+   ~5.5-rung framing rather than shrinking 15 of them to fit. */
+.tree-window {
+  width: clamp(230px, 82vw, 320px);
+  height: clamp(300px, 56svh, 520px);
+  overflow: hidden;
+  /* Soft top/bottom edges so rungs enter and leave the frame deliberately —
+     gentle enough that the rung you banked (one below the focal line) is never
+     half-eaten by the fade. */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 7%,
+    #000 93%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 7%,
+    #000 93%,
+    transparent 100%
+  );
+}
+.tree-ladder .hex-shape {
+  /* One rung ≈ 1/5.5 of the frame: chunky, readable, and a full rung of
+     travel per answer is now unmistakably motion (not 6% of the screen). */
+  padding-top: clamp(14px, 3.4svh, 30px);
+  padding-bottom: clamp(14px, 3.4svh, 30px);
+  font-size: clamp(1rem, 2.6svh, 1.25rem);
+  line-height: 1.4;
+}
+.tree-ladder .anim-ladder-in {
+  animation: none;
+  opacity: 1;
+}
+
+/* "+£X SECURED" chip — lands as the tree does: 600ms float from the
+   980ms landing beat (the BOTH fill hides it until then). */
+.anim-chip-float {
+  animation: chip-float 600ms cubic-bezier(0.22, 1, 0.36, 1) 980ms both;
+}
+@keyframes chip-float {
+  from {
+    opacity: 0;
+    transform: translateY(64px) scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* SAFE-haven flare (rungs 5/10): gold flare + pulse on the SAFE rung.
+   Owns opacity as a BOTH-fill (anim-ladder-in's static opacity:0 would
+   otherwise leave the rung invisible — its animation is overridden here). */
+.flare-safe {
+  animation: safe-flare 1.2s ease-in-out 2 both;
+}
+@keyframes safe-flare {
+  0%,
+  100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 4px rgba(212, 175, 55, 0.5));
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 16px rgba(251, 191, 36, 1)) brightness(1.35);
+    transform: scale(1.045);
+  }
+}
+
+/* Wrong rung shatter: red flash + fall shake (shake is for errors —
+   this IS the error). Wave 3b: the class appears on the SLIDE-DOWN
+   trigger (RevealTree's two-phase fall) — the 150ms delay lets the drop
+   start first so the shatter lands mid-slide. Owns opacity as a BOTH
+   fill (anim-ladder-in's static opacity:0 would otherwise leave the rung
+   invisible — its animation is overridden). */
+.anim-shatter {
+  animation: shatter 1.2s ease-out 150ms both;
+}
+@keyframes shatter {
+  0% {
+    opacity: 1;
+    filter: drop-shadow(0 0 16px rgba(244, 63, 94, 0.95)) brightness(1.5);
+    transform: none;
+  }
+  15% {
+    transform: translateX(-5px);
+  }
+  30% {
+    transform: translateX(4px);
+  }
+  45% {
+    transform: translateX(-3px);
+  }
+  60% {
+    transform: translateX(2px);
+  }
+  75% {
+    transform: none;
+  }
+  100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 6px rgba(244, 63, 94, 0.55));
+    transform: none;
+  }
+}
+
+/* UX v3 wave 3 — the overlay's CONTINUE: a plain opacity fade-in (NO
+   translate, NO ring — wave 2's ring/skip countdown is gone). App arms the
+   solo beat at ~1s; this animates the appearance itself. */
+.anim-continue-fade {
+  animation: continue-fade 300ms ease-out both;
+}
+@keyframes continue-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Fallen screen: red vignette creeping in from the edges. */
+.fall-vignette {
+  background: radial-gradient(
+    ellipse at center,
+    transparent 40%,
+    rgba(120, 10, 30, 0.35) 100%
+  );
+}
+
+/*
+ * UX v3 safe-area: env(safe-area-inset-*) wrapper for the main screen
+ * container (notch / home-indicator phones; viewport-fit=cover in
+ * index.html enables the insets).
+ */
+.safe-area {
+  padding-left: max(0.75rem, env(safe-area-inset-left));
+  padding-right: max(0.75rem, env(safe-area-inset-right));
+  padding-top: max(1rem, env(safe-area-inset-top));
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+}
+
+/*
+ * UX v3 state families — the shared component classes. Every interactive
+ * element rides one of these so rest/hover/focus/active/disabled/pending/
+ * success/warning paint from ONE source (no per-screen drift).
+ */
+@layer components {
+  /* Raised plate surface (question/results/lobby cards). */
+  .plate {
+    @apply rounded-2xl border border-gold-500/25 bg-stage-950/85 backdrop-blur-sm;
+  }
+
+  /* Input field — rest = muted border, focus = gold. */
+  .field {
+    @apply w-full rounded-xl border border-slate-700/70 bg-stage-void/80 p-3.5 text-sm tracking-wide text-slate-100 outline-none transition-colors duration-[250ms] placeholder:text-slate-600 focus:border-gold-500;
+  }
+
+  /* Button base — 44px minimum target. */
+  .btn {
+    @apply inline-flex min-h-[44px] w-full items-center justify-center rounded-xl font-display text-base font-black uppercase tracking-[0.2em] transition-all duration-[250ms] active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40;
+  }
+  /* Primary action (PLAY / JOIN valid / PLAY AGAIN): gold. */
+  .btn-primary {
+    @apply bg-gradient-to-b from-gold-300 via-gold-500 to-gold-600 text-stage-950 shadow-[0_0_24px_rgba(212,175,55,0.35)] hover:from-gold-200 hover:via-gold-400;
+  }
+  /* Secondary/ghost action (HOME / create duel / keep playing). */
+  .btn-ghost {
+    @apply border border-slate-700/70 bg-stage-void/60 text-slate-300 hover:border-gold-500/50 hover:text-gold-300;
+  }
+
+  /* Stat chip (results meta: reached level, lifelines used). */
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-slate-700/70 bg-stage-void/60 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-muted;
+  }
+
+  /* Ghost text link (walk away · £X, recap, escape). */
+  .link-ghost {
+    @apply text-sm font-bold uppercase tracking-widest text-slate-400 transition-colors duration-[250ms] hover:text-gold-300;
+  }
+
+  /* The ONE error banner — severity classes (danger/warning). */
+  .banner {
+    @apply w-full rounded-xl border px-4 py-3 text-center text-sm font-semibold;
+  }
+  .banner-danger {
+    @apply border-rose-800/70 bg-rose-950/60 text-danger;
+  }
+  .banner-warning {
+    @apply border-gold-600/60 bg-amber-950/50 text-gold-200;
+  }
+
+  /* Slim duel turn indicator pill ("You ◆ Alpha"). */
+  .turn-pill {
+    @apply inline-flex min-h-[44px] items-center gap-2 rounded-full border border-slate-700/70 bg-stage-void/60 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-muted transition-colors duration-[250ms] hover:border-gold-500/50 hover:text-gold-300;
+  }
+}
