@@ -111,19 +111,20 @@
 }
 
 /* Glowing wrappers (ladder current rung, locked podium, lifeline circles). */
-/* M-B: "you are here" pulses WHITE, not gold — matching the rung's new
-   white-hot fill. A gold glow on a gold rung was exactly why the current rung
-   and the safe havens read as the same thing. */
+/* M-B: "you are here" pulses in the original amber gold. What separates it
+   from the safe havens is not the glow — it is that the safe havens are MUTED
+   dark gold now, plus the ▶ marker. Brightening this rung further was tried
+   (white-hot, bright gold, a white ring) and each time read as glaring. */
 .glow-current {
   animation: glow-pulse 1.6s ease-in-out infinite;
 }
 @keyframes glow-pulse {
   0%,
   100% {
-    filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.5));
+    filter: drop-shadow(0 0 3px rgba(251, 191, 36, 0.45));
   }
   50% {
-    filter: drop-shadow(0 0 14px rgba(255, 255, 255, 0.95));
+    filter: drop-shadow(0 0 12px rgba(251, 191, 36, 0.9));
   }
 }
 
@@ -327,13 +328,68 @@
   }
 }
 
-/* M-B replan — the climb is a REAL translate driven by the beat sheet in
-   RevealTree (dip → snap → settle), not a keyframe animation. There are
-   deliberately no keyframes here: the motion has to be measurable, and the
-   scale-pulse that used to live here stood in for a slide that never
-   actually happened. The rung handoff still crossfades the glow (above). */
+/* M-B replan — ONE continuous climb curve.
+
+   The first attempt drove the climb from React state as three separate CSS
+   transitions (dip → snap → settle). It was decisive but CLOBBY: each
+   transition restarts the velocity at its boundary, and three boundaries
+   read as three little hitches. One keyframe animation with per-keyframe
+   easing has one uninterrupted velocity profile, which is what makes a move
+   feel smooth rather than mechanical.
+
+   The shape: a short dip DOWN (anticipation — the eye loads), a fast whip
+   UP past the target (overshoot), then a settle back into rest. The travel
+   distance comes from --travel, which RevealTree measures as the free band
+   above the ladder, so the ladder can never slide out of frame. */
 .tree-track {
   will-change: transform;
+}
+
+.tree-climbing {
+  animation: tree-climb var(--climb-ms, 620ms) linear both;
+}
+@keyframes tree-climb {
+  0% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0.4, 0, 0.9, 0.6);
+  }
+  /* Anticipation: pull DOWN before going up. */
+  14% {
+    transform: translateY(6px);
+    animation-timing-function: cubic-bezier(0.12, 0.9, 0.2, 1);
+  }
+  /* The whip: up past the resting place, so the settle has somewhere to
+     come back from. */
+  62% {
+    transform: translateY(calc(var(--travel) * -1.1));
+    animation-timing-function: cubic-bezier(0.3, 0.8, 0.4, 1);
+  }
+  100% {
+    transform: translateY(calc(var(--travel) * -1));
+  }
+}
+
+/* The fall keeps its own shape — a jolt down, a recoil, and home — so a fall
+   never reads as a climb. */
+.tree-stumbling {
+  animation: tree-stumble 560ms linear both;
+}
+@keyframes tree-stumble {
+  0% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0.4, 0, 0.8, 0.6);
+  }
+  26% {
+    transform: translateY(18px);
+    animation-timing-function: cubic-bezier(0.3, 0.9, 0.4, 1.2);
+  }
+  62% {
+    transform: translateY(-6px);
+    animation-timing-function: cubic-bezier(0.3, 0.8, 0.4, 1);
+  }
+  100% {
+    transform: translateY(0);
+  }
 }
 
 /* Wave 3c — the reveal overlay is a CAMERA, not a poster of the whole

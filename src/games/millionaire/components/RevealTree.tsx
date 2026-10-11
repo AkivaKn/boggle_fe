@@ -56,38 +56,27 @@ import { MoneyLadder } from "./MoneyLadder";
 // speed is what makes a modest distance read as a decisive move.
 /** Dip (anticipation) starts — after the mount frame is committed. */
 const DIP_AT_MS = 110;
-/** The snap: the actual climb, on a fast ease-out. */
-const SNAP_AT_MS = 280;
-/** The settle: a 5px recoil that gives the move its weight. */
-const SETTLE_AT_MS = 450;
 /** The rung banks + the next one lights, at the top of the beat. */
-const LAND_AT_MS = 620;
-/** The fall's jolt, then its recoil, then home. */
+const LAND_AT_MS = 560;
+/** The fall's jolt. */
 const FALL_DROP_AT_MS = 130;
-const FALL_RECOIL_AT_MS = 370;
-const FALL_HOME_AT_MS = 620;
 /** t=1s — the fall overlay's "see results" affordance fades in (solo hold). */
 const FALL_RESULTS_AT_MS = 1000;
 
 // ── The distances ─────────────────────────────────────────────────────────
 /** The anticipation dip (px, downward). Small by design. */
-const DIP_PX = 6;
-/** The snap: how far the ladder shoots UP. Clamped to the free band above. */
-const SLIDE_PX = 56;
-/** The settle recoil (px, downward) — the overshoot that sells it. */
-const SETTLE_PX = 5;
-/** The fall's jolt and recoil (px). */
-const FALL_JOLT_PX = 18;
-const FALL_RECOIL_PX = 6;
+// The DISTANCES and the curve now live in CSS (`@keyframes tree-climb`),
+// because the climb had to become ONE continuous animation rather than three
+// chained transitions — three transitions restarted the velocity at each
+// boundary and read as clunky. Only the travel BUDGET stays here, because it
+// has to be measured from the real layout.
+//
+// The motion shape, for the record: a short dip DOWN (anticipation), a fast
+// whip UP past the resting place (overshoot), then a settle back into rest.
 
-// ── The easings ───────────────────────────────────────────────────────────
-// The snap is a hard ease-out: it covers most of its distance in the first
-// third, which is what the eye reads as "snap". A single gentle ease (what
-// every previous version used) reads as drift at these distances.
-const DIP_EASE = "transform 110ms cubic-bezier(0.4, 0, 0.6, 1)";
-const SNAP_EASE = "transform 170ms cubic-bezier(0.16, 1, 0.3, 1)";
-const SETTLE_EASE = "transform 180ms cubic-bezier(0.34, 1.4, 0.64, 1)";
-const FALL_EASE = "transform 240ms cubic-bezier(0.36, 0.9, 0.4, 1.2)";
+/** How far the ladder may travel up — the budget, capped to the free band
+ *  above the ladder, which is measured at mount and may be smaller. */
+const SLIDE_PX = 56;
 
 export interface RevealTreeProps {
   /** "rise" = correct reveal; "fall" = wrong answer / timeout. */
@@ -154,22 +143,23 @@ export const RevealTree: React.FC<RevealTreeProps> = ({
   // leave the frame. Each answer gets the SAME decisive move and returns home
   // as the overlay closes, rather than ratcheting — ratcheting was tried and
   // it dilutes every move to a few pixels.
-  const [y, setY] = useState(0);
-  /** "dip" | "snap" | "settle" — which leg of the climb we are on. */
-  const [leg, setLeg] = useState<"hold" | "dip" | "snap" | "settle">("hold");
+  /** The climb is ONE continuous CSS animation (see `.tree-climbing`), not a
+   *  sequence of transitions. Three separate legs with three easings restarted
+   *  the velocity at every boundary and read as clunky (user report) — one
+   *  curve with per-keyframe easing has continuous velocity throughout. */
+  const [climbing, setClimbing] = useState(false);
   const [landed, setLanded] = useState(false);
   /** Fall: the jolt trigger, then the recoil (its own, uglier shape). */
   const [fallGo, setFallGo] = useState(false);
-  const [, setFallRecoil] = useState(false);
   /** Fall (solo hold): the "see results" affordance fades in at ~1s. */
   const [fallResults, setFallResults] = useState(false);
   const winRef = useRef<HTMLDivElement | null>(null);
   const treeRef = useRef<HTMLDivElement | null>(null);
 
-  /** The travel budget: the empty band above the ladder. Measured, never
-   *  guessed — a fixed SLIDE_PX would push the ladder out of frame on short
-   *  viewports, which is exactly the class of bug the wave-3c audit found. */
-  const [slide, setSlide] = useState(SLIDE_PX);
+  /** The travel budget: the empty band above the ladder, capped at SLIDE_PX.
+   *  MEASURED, never guessed — a fixed distance would push the ladder out of
+   *  frame on a short viewport (the class of bug the wave-3c audit found). */
+  const [slide, setSlide] = useState(0);
 
   useLayoutEffect(() => {
     const win = winRef.current;
@@ -189,9 +179,9 @@ export const RevealTree: React.FC<RevealTreeProps> = ({
     const timers: number[] = [];
     raf1 = requestAnimationFrame(() => {
       raf2 = requestAnimationFrame(() => {
-        timers.push(window.setTimeout(() => { setLeg("dip"); setY(DIP_PX); }, DIP_AT_MS));
-        timers.push(window.setTimeout(() => { setLeg("snap"); setY(-slide); }, SNAP_AT_MS));
-        timers.push(window.setTimeout(() => { setLeg("settle"); setY(-slide + SETTLE_PX); }, SETTLE_AT_MS));
+        // One trigger starts the whole climb; `landed` still fires at the top
+        // of the beat so the rung hands over at the apex.
+        timers.push(window.setTimeout(() => setClimbing(true), DIP_AT_MS));
         timers.push(window.setTimeout(() => setLanded(true), LAND_AT_MS));
       });
     });
@@ -211,9 +201,7 @@ export const RevealTree: React.FC<RevealTreeProps> = ({
     const timers: number[] = [];
     raf1 = requestAnimationFrame(() => {
       raf2 = requestAnimationFrame(() => {
-        timers.push(window.setTimeout(() => { setFallGo(true); setY(FALL_JOLT_PX); }, FALL_DROP_AT_MS));
-        timers.push(window.setTimeout(() => { setFallRecoil(true); setY(-FALL_RECOIL_PX); }, FALL_RECOIL_AT_MS));
-        timers.push(window.setTimeout(() => setY(0), FALL_HOME_AT_MS));
+        timers.push(window.setTimeout(() => setFallGo(true), FALL_DROP_AT_MS));
       });
     });
     timers.push(window.setTimeout(() => setFallResults(true), FALL_RESULTS_AT_MS));
@@ -272,26 +260,14 @@ export const RevealTree: React.FC<RevealTreeProps> = ({
           <div
             ref={treeRef}
             className={`tree-track w-full ${
-              rise && leg === "hold" && !landed ? "tree-climbing" : ""
+              rise ? (climbing ? "tree-climbing" : "") : fallGo ? "tree-stumbling" : ""
             }`}
-            style={{
-              // The whole motion is ONE transform driven by the beat sheet —
-              // a real translate, so it can be measured and felt. No keyframes,
-              // no scale, no opacity trick standing in for a slide.
-              transform: `translateY(${y}px)`,
-              transition:
-                rise
-                  ? leg === "dip"
-                    ? DIP_EASE
-                    : leg === "snap"
-                      ? SNAP_EASE
-                      : leg === "settle"
-                        ? SETTLE_EASE
-                        : undefined
-                  : fallGo
-                    ? FALL_EASE
-                    : undefined,
-            }}
+            style={
+              // The travel budget is MEASURED (the free band above the ladder),
+              // never hard-coded — a fixed distance would push the ladder out
+              // of frame on a short viewport.
+              { "--travel": `${slide}px` } as React.CSSProperties
+            }
           >
           <div className="tree-ladder">
             <MoneyLadder

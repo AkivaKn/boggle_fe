@@ -85,36 +85,48 @@ export const MoneyLadder: React.FC<MoneyLadderProps> = ({
         // the amber pulse (glow on the wrapper — clip-path clips shadows).
         let inner = "bg-gradient-to-b from-stage-900 to-stage-950 text-slate-100/85";
         let wrapper = "";
+        // M-B (final rung hierarchy) — the whole ladder is DARK except the one rung
+        // you are standing on. This is the second attempt at "which rung am I
+        // on?" (the first still failed: the banked rung sat in the same gold
+        // family as the current rung and as the safe havens). The rule now:
+        //
+        //   unreached        dark blue   — base, nothing to see
+        //   earned / done    dark blue   — base again, with a ✓ for "you took
+        //                                  this"; it does NOT keep a fill
+        //   safe haven       MUTED gold  — important, but never bright; it must
+        //                                  not compete with the current rung
+        //   YOU ARE HERE     white-hot   — the only bright rung on the ladder,
+        //                                  plus a ring, a white pulse and ▶
         if (isSafe)
-          // M-B: safe havens sit a tier BELOW the current rung's white-hot so
-          // gold never means two things at once on screen.
           inner =
-            "bg-gradient-to-b from-gold-500 to-gold-700 text-stage-950 shadow-inner";
+            "bg-gradient-to-b from-gold-700 to-gold-900 text-gold-200";
         if (isEarned && !isCurrent)
+          // The DONE rung reverts to the base colour (user decision) — the
+          // ✓ is what says "banked", not a second gold fill competing with the
+          // rung you are on.
           inner =
-            "bg-gradient-to-b from-stage-800 to-stage-900 text-gold-300 border-y border-gold-500/40";
+            "bg-gradient-to-b from-stage-800 to-stage-900 text-gold-300 border-y border-gold-500/25";
         if (isSafe && isEarned)
-          inner = "bg-gradient-to-b from-gold-400 to-gold-600 text-stage-950";
+          inner = "bg-gradient-to-b from-gold-800 to-gold-900 text-gold-300";
         if (isCurrent) {
-          // M-B: "you are here" must never be mistakable for a SAFE haven —
-          // both were gold, so the player could not tell which rung they were
-          // on (user report). The current rung is now WHITE-HOT with a bright
-          // ring and a pulsing glow, a tier above every other state, and it
-          // wears a caret marker in the number slot.
+          // The ORIGINAL amber→gold rung, unchanged (user: "the old colour was
+          // fine"). What changed is everything AROUND it: the safe havens are
+          // now muted dark gold, so this is unmistakably brighter than them,
+          // and the ▶ marker names it outright. Earlier passes tried white-hot
+          // and bright-gold fills to solve the same problem and both read as
+          // glaring — the fix was never to make this rung brighter.
           inner =
-            "bg-gradient-to-b from-white via-amber-200 to-amber-400 text-stage-950 font-black ring-2 ring-white/80";
+            "bg-gradient-to-b from-amber-400 to-gold-600 text-stage-950 font-black";
           wrapper = "glow-current";
         }
-        // M-B: the banked rung CELEBRATES, THEN SETTLES DOWN. It used to hold its
-        // bright gold for the whole beat, which left two bright rungs on screen
-        // — the one you left and the one you are on — and made "which rung am I
-        // on?" ambiguous again (user report). Now it flares on the landing and
-        // dims to the earned tone, so exactly ONE rung is bright at a time.
+        // The rung you just banked: base colour like any other done rung. The
+        // landing is already celebrated by the "+£X SECURED" chip and the
+        // climb itself — the rung does not need to hold a colour for it.
         if (isSecured) {
           inner =
-            "bg-gradient-to-b from-gold-400 to-gold-600 text-stage-950 font-black shadow-[0_0_10px_rgba(212,175,55,0.35)]";
-          wrapper = "rung-banked";
+            "bg-gradient-to-b from-stage-800 to-stage-900 text-gold-300 border-y border-gold-500/25 font-black";
         }
+
         // UX v3 wave 2: the fall's target rung paints RED; the wave-3b
         // shatter (flash + fall shake) only fires on the slide-down
         // trigger (its animationDelay is the shatter choreography's —
@@ -153,14 +165,11 @@ export const MoneyLadder: React.FC<MoneyLadderProps> = ({
                   isCurrent ? "text-stage-950" : isSafe || isSecured ? "text-stage-950/80" : "text-gold-400/80"
                 }`}
               >
-                {/* M-B: the caret is the "you are here" marker — it sits in
-                    the number slot so it can never be confused with the SAFE
-                    chip or a gold amount. */}
-                {isCurrent ? "▶" : level}
+                {level}
               </span>
               {isSafe && (
                 <span
-                  className={`rounded-full border border-stage-950/40 bg-stage-950/10 font-sans font-black uppercase tracking-widest text-stage-950/90 ${
+                  className={`rounded-full border border-gold-300/30 bg-stage-950/30 font-sans font-black uppercase tracking-widest text-gold-200 ${
                     compact ? "px-1 text-xs" : "px-1.5 text-xs"
                   }`}
                 >
