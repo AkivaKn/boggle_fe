@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { GBP } from "../api";
 import { MoneyLadder } from "./MoneyLadder";
 
@@ -51,34 +51,43 @@ import { MoneyLadder } from "./MoneyLadder";
  * approved guards stay verbatim. The timers below are this overlay's own
  * animation state machine only.
  */
-/** t≈420ms — the climb starts (entrance 400ms + a painted hold before it). */
-const CLIMB_AT_MS = 420;
-/** t≈980ms — the camera lands; the secured rung banks + the next one lights. */
-const LAND_AT_MS = 980;
-/** t≈200ms — the fall's painted red-rung hold ends → the stumble fires. */
-const FALL_DROP_AT_MS = 200;
-/** t≈620ms — the stumble settles back to the framing (the failed rung holds). */
-const FALL_SETTLE_AT_MS = 620;
+// ── The beat sheet (M-B replan) ───────────────────────────────────────────
+// Short, sharp, and front-loaded. The snap is the shortest leg on purpose:
+// speed is what makes a modest distance read as a decisive move.
+/** Dip (anticipation) starts — after the mount frame is committed. */
+const DIP_AT_MS = 110;
+/** The snap: the actual climb, on a fast ease-out. */
+const SNAP_AT_MS = 280;
+/** The settle: a 5px recoil that gives the move its weight. */
+const SETTLE_AT_MS = 450;
+/** The rung banks + the next one lights, at the top of the beat. */
+const LAND_AT_MS = 620;
+/** The fall's jolt, then its recoil, then home. */
+const FALL_DROP_AT_MS = 130;
+const FALL_RECOIL_AT_MS = 370;
+const FALL_HOME_AT_MS = 620;
 /** t=1s — the fall overlay's "see results" affordance fades in (solo hold). */
 const FALL_RESULTS_AT_MS = 1000;
-/**
- * Where the rung you are on sits in the window (fraction of window height).
- *
- * 0.7 keeps THREE things readable at once: the ladder still to win above you
- * (~5 rungs), your rung lit at the focal line, and the rung you just banked
- * fully in frame BELOW it. Lower values push the banked rung toward the mask
- * fade (the wave-3c audit caught exactly that milky half-rung); the M-B pass
- * found 0.62 left a band of dead space under the ladder at its floor. The
- * last rung overrides this to hug the frame's bottom edge (see solveCamera).
- */
-const FOCAL = 0.7;
-/** The fall's stumble depth (px) — a visible jolt, settled back at FALL_SETTLE. */
-const FALL_JOLT_PX = 20;
-/** The camera slides are the 400ms rise-family easing (a hair of overshoot on
- *  the climb so the landing has weight). */
-const SLIDE_TRANSITION =
-  "transform 400ms cubic-bezier(0.22, 1, 0.36, 1)";
-const FALL_TRANSITION = "transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1)";
+
+// ── The distances ─────────────────────────────────────────────────────────
+/** The anticipation dip (px, downward). Small by design. */
+const DIP_PX = 6;
+/** The snap: how far the ladder shoots UP. Clamped to the free band above. */
+const SLIDE_PX = 56;
+/** The settle recoil (px, downward) — the overshoot that sells it. */
+const SETTLE_PX = 5;
+/** The fall's jolt and recoil (px). */
+const FALL_JOLT_PX = 18;
+const FALL_RECOIL_PX = 6;
+
+// ── The easings ───────────────────────────────────────────────────────────
+// The snap is a hard ease-out: it covers most of its distance in the first
+// third, which is what the eye reads as "snap". A single gentle ease (what
+// every previous version used) reads as drift at these distances.
+const DIP_EASE = "transform 110ms cubic-bezier(0.4, 0, 0.6, 1)";
+const SNAP_EASE = "transform 170ms cubic-bezier(0.16, 1, 0.3, 1)";
+const SETTLE_EASE = "transform 180ms cubic-bezier(0.34, 1.4, 0.64, 1)";
+const FALL_EASE = "transform 240ms cubic-bezier(0.36, 0.9, 0.4, 1.2)";
 
 export interface RevealTreeProps {
   /** "rise" = correct reveal; "fall" = wrong answer / timeout. */
@@ -123,169 +132,95 @@ export const RevealTree: React.FC<RevealTreeProps> = ({
 }) => {
   const rise = kind === "rise";
 
-  // --- The wave-3b two-phase animation state machine (this overlay's own) --
-  // PHASE 1 is the mount render: `go`/`landed` are false, so no transition is
-  // ever running. The layout effect below measures the ladder's real geometry
-  // and lays the CAMERA at `from` BEFORE the first paint, so the painted frame
-  // is "where you were": your rung N sitting at the focal line. PHASE 2 (the
-  // double rAF — after the mount frame is committed) slides the camera to
-  // `to`: up one rung on a correct answer (the ladder flows DOWN past you and
-  // the rung you banked lights gold while the NEXT rung lights as your new
-  // perch), or a stumble on a fall (the failed rung shatters in place).
-  const [cam, setCam] = useState<{ from: number; to: number } | null>(null);
-  const [go, setGo] = useState(false);
+  // ── THE MOTION MACHINE (M-B replan, built fresh) ─────────────────────────
+  //
+  // Four previous versions all used a MONOTONE motion — one continuous
+  // translate (invisible at a rung of travel) or a scale pulse (not a slide).
+  // The lesson is that distance is not what makes motion readable; TIMING is.
+  // A card snapping shut travels ~40px and reads as decisive; this ladder
+  // travelled 88px and read as dead. So the climb is built from anticipation
+  // and snap, which the eye is far more sensitive to:
+  //
+  //   dip (110ms)  → the ladder drops 6px. Anticipation: the eye loads and
+  //                   expects movement.
+  //   snap (170ms) → it shoots UP SLIDE_PX on a fast ease-out. This is the
+  //                   climb, and the speed is what makes it read.
+  //   settle(180ms)→ it recoils 5px and holds. The overshoot is what makes it
+  //                   feel physical rather than mechanical.
+  //
+  // All fifteen rungs stay visible throughout (the requirement, twice). The
+  // travel budget is the empty band ABOVE the ladder: the stage is taller than
+  // the ladder, and `slide` is clamped to that band so the ladder can never
+  // leave the frame. Each answer gets the SAME decisive move and returns home
+  // as the overlay closes, rather than ratcheting — ratcheting was tried and
+  // it dilutes every move to a few pixels.
+  const [y, setY] = useState(0);
+  /** "dip" | "snap" | "settle" — which leg of the climb we are on. */
+  const [leg, setLeg] = useState<"hold" | "dip" | "snap" | "settle">("hold");
   const [landed, setLanded] = useState(false);
-  /** Fall: the stumble trigger (false = the painted static-red hold). */
+  /** Fall: the jolt trigger, then the recoil (its own, uglier shape). */
   const [fallGo, setFallGo] = useState(false);
-  /** Fall: the settle-back (the stumble is one jolt, then home). */
-  const [fallSettled, setFallSettled] = useState(false);
+  const [, setFallRecoil] = useState(false);
   /** Fall (solo hold): the "see results" affordance fades in at ~1s. */
   const [fallResults, setFallResults] = useState(false);
   const winRef = useRef<HTMLDivElement | null>(null);
   const treeRef = useRef<HTMLDivElement | null>(null);
 
-  // Solve the camera. Runs in a LAYOUT effect → it flushes before the first
-  // paint (a measurement, not a transition), so phase 1 already paints the
-  // "where you were" framing and the slide always starts from a real painted
-  // state. The camera is clamped to the track's ends, so level 1 (the ladder's
-  // floor) and level 15 (its top) frame honestly instead of sliding into empty
-  // space.
-  //
-  // GEOMETRY IS DERIVED, NOT MEASURED PER RUNG (M-B audit): this used to read
-  // each rung's `offsetTop`, and the mount-time read caught the ladder BEFORE
-  // it reached its final layout — the rungs were ~74px tall instead of their
-  // settled ~62px, so the camera was solved 160px off and the frame showed a
-  // 280px band of dead space under the ladder (the "zoomed into part of the
-  // ladder" report). The ladder is UNIFORM, so one number (the track height)
-  // plus the rung count gives every position exactly — and `reframe` below
-  // re-solves whenever the real geometry changes (viewport resize, orientation,
-  // a late font/CSS settle), so a stale solve can never survive.
-  const solveCamera = useCallback((): { from: number; to: number } | null => {
-    const win = winRef.current;
-    const track = treeRef.current;
-    if (!win || !track) return null;
-    const rows = track.querySelectorAll<HTMLElement>("[data-rung]");
-    const count = rows.length;
-    if (count === 0) return null;
-    const H = win.clientHeight;
-    const trackH = track.offsetHeight;
-    if (H < 40 || trackH <= H) return null; // nothing to travel — leave unframed
-    const pitch = trackH / count;
-    const first = rows[0];
-    const base = first.offsetTop; // the track's own top edge
-    const rungH = first.offsetHeight;
-    const focal = H * FOCAL;
-    const topOf = (lvl: number): number | null =>
-      lvl >= 1 && lvl <= count ? base + (count - lvl) * pitch : null;
-    const camFor = (lvl: number): number | null => {
-      const top = topOf(lvl);
-      if (top === null) return null;
-      // The BOTTOM rung sits lower in the frame than the standard focal line
-      // (it IS the ladder's floor — holding it at the focal line left a band
-      // of dead space beneath it, which read as broken layout). It still keeps
-      // a floor's worth of travel into level 2.
-      const line = lvl === count ? Math.min(focal, H - rungH - 10) : focal;
-      // Only the TOP of the ladder clamps (never show sky above rung 15 — as
-      // you near the top the framing settles and the rung rises within the
-      // frame instead). The BOTTOM deliberately does NOT clamp: clamping to
-      // the track's end squashed levels 1→2 into 15px of travel (the audit
-      // that caught it).
-      return Math.min(0, line - top);
-    };
-    const here = camFor(level);
-    if (here === null) return null;
-    // Rise: camera up one rung (the tree flows down past you). Level 15 is the
-    // top of the ladder — there is nowhere higher, so it lands in place.
-    // Fall: the framing HOLDS on the failed rung (it shatters where you stood)
-    // and the stumble jolt is added as a transient offset.
-    const nextUp = rise && level < 15 ? camFor(level + 1) : null;
-    return { from: here, to: nextUp ?? here };
-  }, [rise, level]);
+  /** The travel budget: the empty band above the ladder. Measured, never
+   *  guessed — a fixed SLIDE_PX would push the ladder out of frame on short
+   *  viewports, which is exactly the class of bug the wave-3c audit found. */
+  const [slide, setSlide] = useState(SLIDE_PX);
 
-  // Paint the solved camera before the first frame...
   useLayoutEffect(() => {
-    // DELIBERATE: measuring the ladder and laying the camera down BEFORE the
-    // first paint is the entire point of a layout effect. Doing it in a
-    // passive effect would paint one frame at the un-framed offset and then
-    // jump — which is exactly the artefact this choreography exists to
-    // eliminate (and which a previous "avoid setState in effects" reading
-    // would reintroduce).
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setCam(solveCamera());
-  }, [solveCamera]);
-
-  // ...and keep it honest: if the real geometry changes after mount (viewport
-  // resize, orientation change, a late CSS/font settle), re-solve. Once the
-  // climb has been triggered the framing is FROZEN — moving the camera
-  // mid-animation would be the exact "it jumps" artefact this whole pass
-  // exists to remove.
-  useEffect(() => {
     const win = winRef.current;
     const track = treeRef.current;
-    if (!win || !track || typeof ResizeObserver === "undefined") return;
-    let frozen = false;
-    const ro = new ResizeObserver(() => {
-      if (frozen) return;
-      setCam(solveCamera());
-    });
-    ro.observe(win);
-    ro.observe(track);
-    return () => {
-      frozen = true;
-      ro.disconnect();
-    };
-  }, [solveCamera]);
+    if (!win || !track) return;
+    const band = Math.max(0, win.clientHeight - track.offsetHeight);
+    setSlide(Math.min(SLIDE_PX, band));
+  }, []);
 
-  // RISE phase 2: after the double rAF proves the phase-1 frame painted, slide
-  // the camera up one rung; the landing beat banks the rung + lights the next.
+  // RISE: the three-leg climb. Gated on a double rAF so the mount frame is
+  // committed before anything moves — the animation must start from a pose the
+  // player actually saw.
   useEffect(() => {
     if (!rise) return;
     let raf1 = 0;
     let raf2 = 0;
-    let climbTimer = 0;
-    let landTimer = 0;
+    const timers: number[] = [];
     raf1 = requestAnimationFrame(() => {
       raf2 = requestAnimationFrame(() => {
-        climbTimer = window.setTimeout(() => setGo(true), CLIMB_AT_MS);
-        landTimer = window.setTimeout(() => setLanded(true), LAND_AT_MS);
+        timers.push(window.setTimeout(() => { setLeg("dip"); setY(DIP_PX); }, DIP_AT_MS));
+        timers.push(window.setTimeout(() => { setLeg("snap"); setY(-slide); }, SNAP_AT_MS));
+        timers.push(window.setTimeout(() => { setLeg("settle"); setY(-slide + SETTLE_PX); }, SETTLE_AT_MS));
+        timers.push(window.setTimeout(() => setLanded(true), LAND_AT_MS));
       });
     });
     return () => {
       cancelAnimationFrame(raf1);
       cancelAnimationFrame(raf2);
-      clearTimeout(climbTimer);
-      clearTimeout(landTimer);
+      timers.forEach(clearTimeout);
     };
-  }, [rise]);
+  }, [rise, slide]);
 
-  // FALL phase 2: the same double rAF — the static red rung must be on screen
-  // first — then the stumble jolts the camera down and settles it back, with
-  // the shatter mid-jolt; the solo hold's "see results" fades at 1s.
+  // FALL: the ladder jolts down and recoils — a different shape from the
+  // climb, because a fall should not feel like a climb.
   useEffect(() => {
     if (rise) return;
     let raf1 = 0;
     let raf2 = 0;
-    let dropTimer = 0;
-    let settleTimer = 0;
+    const timers: number[] = [];
     raf1 = requestAnimationFrame(() => {
       raf2 = requestAnimationFrame(() => {
-        dropTimer = window.setTimeout(() => setFallGo(true), FALL_DROP_AT_MS);
-        settleTimer = window.setTimeout(
-          () => setFallSettled(true),
-          FALL_SETTLE_AT_MS,
-        );
+        timers.push(window.setTimeout(() => { setFallGo(true); setY(FALL_JOLT_PX); }, FALL_DROP_AT_MS));
+        timers.push(window.setTimeout(() => { setFallRecoil(true); setY(-FALL_RECOIL_PX); }, FALL_RECOIL_AT_MS));
+        timers.push(window.setTimeout(() => setY(0), FALL_HOME_AT_MS));
       });
     });
-    const resultsTimer = window.setTimeout(
-      () => setFallResults(true),
-      FALL_RESULTS_AT_MS,
-    );
+    timers.push(window.setTimeout(() => setFallResults(true), FALL_RESULTS_AT_MS));
     return () => {
       cancelAnimationFrame(raf1);
       cancelAnimationFrame(raf2);
-      clearTimeout(dropTimer);
-      clearTimeout(settleTimer);
-      clearTimeout(resultsTimer);
+      timers.forEach(clearTimeout);
     };
   }, [rise]);
 
@@ -337,37 +272,26 @@ export const RevealTree: React.FC<RevealTreeProps> = ({
           <div
             ref={treeRef}
             className={`tree-track w-full ${
-              rise
-                ? go && !landed
-                  ? "tree-climbing"
-                  : ""
-                : fallGo && !fallSettled
-                  ? "tree-stumbling"
-                  : ""
+              rise && leg === "hold" && !landed ? "tree-climbing" : ""
             }`}
-            style={
-              // `cam` is null whenever the WHOLE ladder already fits the
-              // frame — which is the normal case now that all fifteen rungs
-              // are always visible. In that mode there is no camera to move
-              // and the choreography runs entirely on the CSS classes
-              // (tree-lift on a rise, tree-stumble on a fall). The inline
-              // transform is kept ONLY for the short-viewport fallback where
-              // the ladder genuinely overflows and must be scrolled.
-              !cam
-                ? undefined
-                : rise
-                  ? {
-                      transform: `translateY(${go ? cam.to : cam.from}px)`,
-                      transition: go ? SLIDE_TRANSITION : undefined,
-                    }
-                  : {
-                      // Fall: jolt down at the trigger, settle home after.
-                      transform: `translateY(${
-                        cam.from + (fallGo && !fallSettled ? FALL_JOLT_PX : 0)
-                      }px)`,
-                      transition: fallGo ? FALL_TRANSITION : undefined,
-                    }
-            }
+            style={{
+              // The whole motion is ONE transform driven by the beat sheet —
+              // a real translate, so it can be measured and felt. No keyframes,
+              // no scale, no opacity trick standing in for a slide.
+              transform: `translateY(${y}px)`,
+              transition:
+                rise
+                  ? leg === "dip"
+                    ? DIP_EASE
+                    : leg === "snap"
+                      ? SNAP_EASE
+                      : leg === "settle"
+                        ? SETTLE_EASE
+                        : undefined
+                  : fallGo
+                    ? FALL_EASE
+                    : undefined,
+            }}
           >
           <div className="tree-ladder">
             <MoneyLadder
