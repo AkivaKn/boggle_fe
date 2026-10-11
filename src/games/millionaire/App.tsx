@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   amountAt,
+  ApiError,
   answer,
   continueRun,
   getWsUrl,
@@ -479,6 +480,16 @@ function App() {
 
   /** M5: tear down the hold-until-continue beat (question advanced, game
    *  over, reset, or disconnect). */
+  // A pending "too soon" retry must die with the game context: question_next /
+  // game_over advance the run, and a late retry would POST against the NEW
+  // question.
+  const clearContinueRetry = () => {
+    if (continueRetryRef.current !== null) {
+      clearTimeout(continueRetryRef.current);
+      continueRetryRef.current = null;
+    }
+  };
+
   const clearContinueBeat = useCallback(() => {
     if (continueTimerRef.current) {
       clearTimeout(continueTimerRef.current);
@@ -612,6 +623,8 @@ function App() {
       dismissAudience();
       clearPendingLifeline();
       clearContinueBeat();
+    clearContinueRetry();
+      clearContinueRetry();
       // UX v3 wave 2: the reveal overlay dies with the game context too.
       clearFallOverlay();
       if (!keepDuelState) {
@@ -777,6 +790,9 @@ function App() {
           lifelineQuestionLevelRef.current = null;
           lifelineRefusalRef.current = null;
           clearContinueBeat();
+    clearContinueRetry();
+          clearContinueRetry();
+      clearContinueRetry();
           const me = data.players.find((p) => p.seat === data.seat);
           const reached = me?.level_reached ?? 0;
           const meStatus = me?.status ?? "active";
@@ -912,6 +928,9 @@ function App() {
           break;
         case "question_next": {
           clearContinueBeat();
+    clearContinueRetry();
+          clearContinueRetry();
+      clearContinueRetry();
           // UX v3 wave 2: the run moved on — BOTH overlay kinds auto-close
           // (the rise reveal via `setReveal(null)` below; a fallen seat's
           // fall overlay — the survivor's questions keep arriving).
@@ -1472,6 +1491,9 @@ function App() {
         case "game_over":
           gameOverRef.current = true;
           clearContinueBeat();
+    clearContinueRetry();
+          clearContinueRetry();
+      clearContinueRetry();
           // UX v3 wave 2: the results screen takes over — close any reveal
           // overlay still up (e.g. a rise overlay held over the interim
           // after a won run).
@@ -1522,6 +1544,16 @@ function App() {
             lifelineRefusalRef.current = pendingLifelineRef.current;
             lifelineQuestionLevelRef.current = null;
             clearPendingLifeline();
+          }
+          // A `continue` refused for being EARLY ("too soon") is a timing
+          // condition, not a failure: the reveal beat has not elapsed yet. The
+          // REST retry in handleContinue is already re-pressing, so surfacing
+          // it here produced exactly the reported bug — a flash of "too soon"
+          // on the first, perfectly normal, press of every question. Log it
+          // and stay quiet.
+          if (/too soon/i.test(data.message)) {
+            addLog("Continue held — waiting out the reveal beat.");
+            break;
           }
           showError(data.message);
           addLog(`Error: ${data.message}`);
@@ -1747,6 +1779,7 @@ function App() {
     closeSocket();
     clearCopyTimer();
     clearContinueBeat();
+    clearContinueRetry();
     if (errorTimerRef.current) {
       clearTimeout(errorTimerRef.current);
       errorTimerRef.current = null;
@@ -1900,18 +1933,37 @@ function App() {
    *  affordance hides immediately; if the POST fails the beat re-arms so
    *  the run can never strand (pre-M7 backends simply auto-advance and the
    *  arriving question_next clears the affordance anyway). */
-  const handleContinue = () => {
+  // The CONTINUE press. The server refuses a continue with 409 "too soon"
+  // until the ~2.5s reveal beat has elapsed, but the button fades in at ~1s —
+  // so a player who pressed promptly ALWAYS got refused, saw an error banner,
+  // and had to press again (the exact "first press doesn't work" report).
+  //
+  // A "too soon" refusal is a TIMING condition, not a failure: retry it
+  // silently a beat later instead of surfacing an error. Genuine failures
+  // (network, an ended run, anything else) still banner and re-arm as before.
+  const continueRetryRef = useRef<number | null>(null);
+  const handleContinue = useCallback(() => {
     if (!roomId || !token) return;
     setContinueArmed(false);
-    void continueRun(roomId, token).catch(() => {
-      showError("Continue failed — the next question is on its way.");
-      // Re-arm only if the run still hasn't advanced (question_next /
-      // game_over clear the beat).
-      if (continueTimerRef.current === null) {
-        scheduleContinueBeat();
-      }
-    });
-  };
+    const press = (attempt: number) => {
+      void continueRun(roomId, token).catch((err: unknown) => {
+        const tooSoon = err instanceof ApiError && err.isTooSoon;
+        if (tooSoon && attempt < 5) {
+          // ~600ms apart: the beat is ~2.5s and the button appears at ~1s, so
+          // at most three retries are ever needed.
+          continueRetryRef.current = window.setTimeout(() => press(attempt + 1), 600);
+          return;
+        }
+        showError("Continue failed — the next question is on its way.");
+        // Re-arm only if the run still hasn't advanced (question_next /
+        // game_over clear the beat).
+        if (continueTimerRef.current === null) {
+          scheduleContinueBeat();
+        }
+      });
+    };
+    press(0);
+  }, [roomId, token, showError, scheduleContinueBeat]);
 
   const handleWalk = () => {
     if (!roomId || !token || ladder.status !== "active") return;

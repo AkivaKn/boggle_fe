@@ -288,13 +288,48 @@ export type WsMessage =
 // Note: `ping` is client → server only (SPEC §2), so it is deliberately absent
 // from this inbound union. The keepalive send lives in App.tsx.
 
-const post = async (path: string, body: unknown): Promise<void> => {
+/**
+ * A REST failure that CARRIES the server's own reason and status.
+ *
+ * This exists because the old `post` threw a bare string ("failed (409)"),
+ * which made every failure indistinguishable: the `continue` endpoint refuses
+ * with 409 "too soon" until the reveal beat has elapsed, and the client could
+ * not tell that apart from a real error — so the first CONTINUE press of every
+ * question flashed an error banner and appeared to do nothing (user report).
+ */
+export class ApiError extends Error {
+  readonly status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+  /** The server refused because the reveal beat has not elapsed yet — a
+   *  timing condition the caller should simply retry, not surface. */
+  get isTooSoon(): boolean {
+    return this.status === 409 && /too soon/i.test(this.message);
+  }
+}
+
+/** POST that reports the server's status AND its `error` text when present. */
+export const post = async (path: string, body: unknown): Promise<void> => {
   const res = await fetch(`${API_BASE}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`POST ${path} failed (${res.status})`);
+  if (!res.ok) {
+    // The server's JSON error is the useful part; fall back to the status when
+    // the body is not JSON (a proxy/HTML error page, say).
+    let detail = "";
+    try {
+      const parsed = await res.json();
+      if (parsed && typeof parsed.error === "string") detail = parsed.error;
+    } catch {
+      /* not JSON — keep the status-only message */
+    }
+    throw new ApiError(res.status, detail || `POST ${path} failed (${res.status})`);
+  }
 };
 
 /** Like `post`, but for endpoints whose REST body carries state the FE acts
