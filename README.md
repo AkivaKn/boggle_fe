@@ -1,48 +1,61 @@
-# Boggle FE
+# Games FE — the hub for Boggle & Millionaire
 
-A real-time multiplayer Boggle game frontend built with React, TypeScript, Vite, and Tailwind CSS.
+One React SPA serving **every game** from one endpoint. Built with React,
+TypeScript, Vite and Tailwind CSS.
 
-## Features
+## Routes
 
-- Create or join Boggle lobbies
-- Real-time updates via WebSocket
-- Responsive, modern UI with Tailwind CSS
+| Path | Screen |
+|---|---|
+| `/` | The lobby — pick a game |
+| `/boggle` | Boggle |
+| `/millionaire` | Millionaire |
+
+Unknown paths fall back to the lobby, so a stale bookmark never lands on a
+blank screen. Navigation is client-side (History API + `popstate`), so moving
+between games never reloads the document.
+
+## Structure
+
+```
+src/App.tsx                      the hub: lobby + route switch
+src/router.ts                    the three routes (hand-rolled on purpose —
+                                 no router dependency for three routes)
+src/games/BoggleApp.tsx          Boggle
+src/games/boggleApi.ts           Boggle's REST/WS client
+src/games/components_boggle/     Boggle's components
+src/games/millionaire/           Millionaire (app, api client, components)
+src/index.css                    the shared design system (Stage palette + tokens)
+```
+
+Each game keeps its own state namespace (Boggle persists its room under
+`roomId`/`roomCode`, Millionaire under its own keys), so the two can never
+collide in one browser.
+
+## Backend
+
+Both games talk to the **one** API in the sibling `boggle` repo, on their own
+route trees:
+
+- Boggle → `/api/boggle/*`, `/ws/boggle/*`
+- Millionaire → `/api/millionaire/*`, `/ws/millionaire/*`
+
+Set `VITE_API_URL` to the API origin (the devcontainer sets it to
+`http://localhost:8080`). It must be an origin the API's `ALLOWED_ORIGINS`
+list includes — the WebSocket upgrade is origin-checked.
 
 ## Setup
 
-1. **Install dependencies:**
+```sh
+npm install
+npm run dev     # hub on http://localhost:5173
+npm run build   # -> dist/
+npm run lint
+```
 
-   ```sh
-   npm install
-   ```
+## Deployment
 
-2. **Configure API URL (optional):**
-
-   By default, the frontend connects to `http://localhost:8080`.  
-   To use a different backend URL, set the `VITE_API_URL` environment variable in a `.env` file:
-
-   ```
-   VITE_API_URL=http://your-backend-url
-   ```
-
-3. **Start the development server:**
-
-   ```sh
-   npm run dev
-   ```
-
-4. **Build for production:**
-
-   ```sh
-   npm run build
-   ```
-
-5. **Preview the production build:**
-
-   ```sh
-   npm run preview
-   ```
-
----
-
-This project uses [Vite](https://vitejs.dev/), [React](https://react.dev/), and [Tailwind CSS](https://tailwindcss.com/).
+The build command (`npm run build`) and publish dir (`dist/`) are unchanged
+from when this repo served Boggle alone. `public/_redirects` supplies the SPA
+history fallback, so `/boggle` and `/millionaire` work as direct links and
+survive a refresh inside a game.

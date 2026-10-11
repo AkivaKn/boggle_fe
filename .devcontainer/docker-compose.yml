@@ -1,0 +1,22 @@
+# The merged FE devcontainer: ONE Vite dev server serving the hub and both
+# games. The hub is one SPA, so it is one dev server — the old per-game FE
+# dev servers (Boggle 5173 / Millionaire 5177) collapse into this one.
+name: games_fe
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    volumes:
+      - ../:/workspace:cached
+    command: sleep infinity
+    environment:
+      # The browser resolves the API on the HOST-published port; the backend's
+      # devcontainer publishes 8080. host.docker.internal is container-side only
+      # and must not be used here.
+      - VITE_API_URL=http://localhost:8080
+    ports:
+      - "5173:5173"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
