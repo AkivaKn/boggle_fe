@@ -1095,6 +1095,95 @@
   }
 }
 
+.fc-active-play {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.fc-active-play .safe-area {
+  height: 100%;
+  max-width: 72rem;
+  min-height: 0;
+  padding-top: max(0.35rem, env(safe-area-inset-top));
+  padding-bottom: max(0.35rem, env(safe-area-inset-bottom));
+}
+
+.fc-active-play .fc-play {
+  height: 100%;
+}
+
+.fc-rotate-guard {
+  display: none;
+}
+
+.fc-rotate-icon {
+  color: var(--fc-coral);
+  font-family: var(--fc-display);
+  font-size: 4rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+@media (orientation: portrait) and (pointer: coarse) {
+  .fc-active-play .fc-rotate-guard {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 0.5rem;
+    background: var(--fc-paper);
+    padding: 1.5rem;
+    text-align: center;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .fc-active-play .safe-area {
+    padding-top: max(0.25rem, env(safe-area-inset-top));
+    padding-bottom: max(0.25rem, env(safe-area-inset-bottom));
+  }
+
+  .fc-active-play .fc-zone {
+    height: clamp(64px, 16dvh, 92px);
+  }
+
+  .fc-active-play .fc-stage {
+    gap: 0.3rem;
+    padding: 0.4rem 0.75rem;
+  }
+
+  .fc-active-play .fc-word {
+    font-size: clamp(2rem, 8vw, 4rem);
+  }
+
+  .fc-active-play .fc-clock {
+    font-size: clamp(1.35rem, 4.2vw, 1.9rem);
+  }
+
+  .fc-active-play .fc-tally {
+    gap: 0.5rem;
+    font-size: 0.58rem;
+    padding: 0.25rem 0.6rem;
+  }
+
+  .fc-active-play .fc-menu-btn {
+    top: 0.35rem;
+    right: 0.35rem;
+    width: 38px;
+    height: 38px;
+  }
+
+  .fc-active-play .fc-hint {
+    font-size: 0.56rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .fc-word-in,
   .fc-countdown-pop,

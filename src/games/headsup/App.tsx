@@ -11,6 +11,11 @@ import { TurnIntro } from "./components/TurnIntro";
 import { TurnSummary } from "./components/TurnSummary";
 import { BUILTIN_DECKS } from "./decks";
 import {
+  exitPlayDisplay,
+  lockLandscape,
+  unlockLandscape,
+} from "./display";
+import {
   MAX_PLAYERS,
   addPlayer,
   applyGesture,
@@ -249,6 +254,22 @@ export default function ForeheadCharadesApp({
       (game?.stage === "intro" || game?.stage === "playing"),
   );
 
+  const activePlay = route === "game" && game?.stage === "playing";
+  const inGame = route === "game" && game !== null;
+
+  useEffect(() => {
+    if (activePlay) {
+      void lockLandscape();
+      return;
+    }
+    unlockLandscape();
+  }, [activePlay]);
+
+  useEffect(() => {
+    if (inGame) return;
+    exitPlayDisplay();
+  }, [inGame]);
+
   const inProgress =
     route === "game" && game !== null && game.stage !== "final";
   useEffect(() => {
@@ -267,7 +288,11 @@ export default function ForeheadCharadesApp({
       : HOME_PATH;
 
   return (
-    <div className="fc-theme fc-shell relative flex flex-col overflow-hidden">
+    <div
+      className={`fc-theme fc-shell relative flex flex-col overflow-hidden ${
+        activePlay ? "fc-active-play" : ""
+      }`}
+    >
       <div className="fc-bg pointer-events-none absolute inset-0" aria-hidden />
       <div className="safe-area relative mx-auto flex w-full max-w-md flex-1 flex-col items-center">
         {route === "home" && (
@@ -388,6 +413,18 @@ export default function ForeheadCharadesApp({
           />
         )}
       </div>
+
+      {activePlay && (
+        <div className="fc-rotate-guard" role="status">
+          <span className="fc-rotate-icon" aria-hidden>
+            ↻
+          </span>
+          <p className="fc-display text-2xl">Turn your phone sideways</p>
+          <p className="fc-muted text-sm">
+            Active play runs in landscape.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

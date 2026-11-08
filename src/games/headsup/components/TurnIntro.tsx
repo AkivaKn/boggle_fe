@@ -1,14 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { Player } from "../types";
 import type { TiltController } from "../useTilt";
+import { enterPlayDisplay } from "../display";
 import { playCountdown, unlockAudio } from "../sound";
-
-const requestFullscreen = () => {
-  if (typeof document === "undefined" || document.fullscreenElement) return;
-  const element = document.documentElement;
-  if (!element.requestFullscreen) return;
-  void element.requestFullscreen().catch(() => undefined);
-};
 
 export function TurnIntro({
   player,
@@ -37,13 +31,16 @@ export function TurnIntro({
   useEffect(() => {
     if (count === null) return;
     if (count === 0) {
-      if (!beganRef.current) {
-        beganRef.current = true;
-        onBegin();
-      }
-      return;
+      playCountdown(0);
+      const timer = window.setTimeout(() => {
+        if (!beganRef.current) {
+          beganRef.current = true;
+          onBegin();
+        }
+      }, 650);
+      return () => window.clearTimeout(timer);
     }
-    playCountdown(count === 1);
+    playCountdown(count);
     const timer = window.setTimeout(
       () => setCount((current) => (current === null ? null : current - 1)),
       750,
@@ -54,7 +51,7 @@ export function TurnIntro({
   const start = async () => {
     if (count !== null) return;
     unlockAudio();
-    requestFullscreen();
+    void enterPlayDisplay();
     await tilt.requestPermission();
     setCount(3);
   };

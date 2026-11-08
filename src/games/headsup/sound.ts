@@ -45,8 +45,10 @@ export const unlockAudio = (): void => {
 const tone = (
   frequency: number,
   durationMs: number,
-  volume = 0.16,
+  volume = 0.88,
   delayMs = 0,
+  type: OscillatorType = "triangle",
+  endFrequency?: number,
 ): void => {
   void ensureRunning()
     .then((audio) => {
@@ -56,10 +58,16 @@ const tone = (
         const duration = durationMs / 1000;
         const oscillator = audio.createOscillator();
         const gain = audio.createGain();
-        oscillator.type = "triangle";
+        oscillator.type = type;
         oscillator.frequency.setValueAtTime(frequency, startAt);
+        if (endFrequency) {
+          oscillator.frequency.exponentialRampToValueAtTime(
+            endFrequency,
+            startAt + duration,
+          );
+        }
         gain.gain.setValueAtTime(0.0001, startAt);
-        gain.gain.exponentialRampToValueAtTime(volume, startAt + 0.008);
+        gain.gain.exponentialRampToValueAtTime(volume, startAt + 0.006);
         gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
         oscillator.connect(gain);
         gain.connect(audio.destination);
@@ -72,12 +80,27 @@ const tone = (
     .catch(() => undefined);
 };
 
-export const playCorrect = (): void => tone(720, 110);
-export const playPass = (): void => tone(300, 110, 0.14);
-export const playCountdown = (final: boolean): void =>
-  tone(final ? 880 : 440, final ? 220 : 100, 0.15);
-export const playTick = (): void => tone(520, 65, 0.07);
+export const playCorrect = (): void => {
+  tone(880, 80, 0.9);
+  tone(1320, 140, 0.92, 90);
+};
+
+export const playPass = (): void => {
+  tone(220, 220, 0.92, 0, "square", 140);
+};
+
+export const playCountdown = (step: number): void => {
+  if (step <= 0) {
+    tone(880, 90, 0.85);
+    tone(1320, 180, 0.9, 100);
+    return;
+  }
+  tone(step === 1 ? 660 : 440, step === 1 ? 140 : 90, 0.72);
+};
+
+export const playTick = (): void => tone(520, 65, 0.42);
+
 export const playEnd = (): void => {
-  tone(440, 200, 0.18);
-  tone(330, 340, 0.18, 180);
+  tone(440, 200, 0.75);
+  tone(330, 340, 0.75, 180);
 };
