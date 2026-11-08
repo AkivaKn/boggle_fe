@@ -44,7 +44,6 @@ export function PlayScreen({
       ) : (
         <RoundBody
           game={game}
-          tilt={tilt}
           onScore={onScore}
           onEndTurn={onEndTurn}
           onManagePlayers={onManagePlayers}
@@ -59,7 +58,6 @@ export function PlayScreen({
 
 function RoundBody({
   game,
-  tilt,
   onScore,
   onEndTurn,
   onManagePlayers,
@@ -68,7 +66,6 @@ function RoundBody({
   tiltUnavailable,
 }: {
   game: ActiveGame;
-  tilt: TiltController;
   onScore: (gesture: TiltGesture) => void;
   onEndTurn: () => void;
   onManagePlayers: () => void;
@@ -174,14 +171,6 @@ function RoundBody({
         <p className="fc-hint">
           {tiltUnavailable ? "Tap to score" : "Tilt ↓ correct · ↑ pass"}
         </p>
-        {tilt.debug &&
-          new URLSearchParams(window.location.search).has("tiltDebug") && (
-            <p className="fc-hint" aria-live="polite">
-              angle {tilt.debug.angle} · {tilt.debug.axis}×{tilt.debug.sign} · raw{" "}
-              {tilt.debug.raw?.toFixed(1) ?? "—"} · Δ{" "}
-              {tilt.debug.delta?.toFixed(1) ?? "—"}
-            </p>
-          )}
       </div>
 
       <button

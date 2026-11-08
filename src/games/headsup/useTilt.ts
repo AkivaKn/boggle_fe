@@ -3,25 +3,15 @@ import type { TiltGesture, TiltPermission } from "./types";
 
 const CALIBRATION_MS = 700;
 const CALIBRATION_TIMEOUT_MS = 1300;
-const GESTURE_DEG = 32;
+const GESTURE_DEG = 40;
 const NEUTRAL_DEG = 14;
 const COOLDOWN_MS = 650;
-
-export type TiltDebugInfo = {
-  angle: number;
-  axis: "beta" | "gamma";
-  sign: 1 | -1;
-  raw: number | null;
-  delta: number | null;
-  hasReading: boolean;
-};
 
 export type TiltController = {
   permission: TiltPermission;
   calibrating: boolean;
   ready: boolean;
   requestPermission: () => Promise<TiltPermission>;
-  debug: TiltDebugInfo | null;
 };
 
 const normalize = (degrees: number): number =>
@@ -58,7 +48,6 @@ export function useTilt(options: {
     useState<TiltPermission>(initialPermission);
   const [calibrating, setCalibrating] = useState(false);
   const [ready, setReady] = useState(false);
-  const [debug, setDebug] = useState<TiltDebugInfo | null>(null);
   const onGestureRef = useRef(options.onGesture);
 
   useEffect(() => {
@@ -128,45 +117,17 @@ export function useTilt(options: {
       const mapping = axisForAngle(angle);
       const rawValue = mapping.axis === "beta" ? event.beta : event.gamma;
       const raw = rawValue !== null && !Number.isNaN(rawValue) ? rawValue : null;
-
-      if (raw === null) {
-        setDebug({
-          angle,
-          axis: mapping.axis,
-          sign: mapping.sign,
-          raw: null,
-          delta: null,
-          hasReading: false,
-        });
-        return;
-      }
+      if (raw === null) return;
 
       const now = performance.now();
       if (now - startedAt < CALIBRATION_MS) {
         samples.push(raw);
-        setDebug({
-          angle,
-          axis: mapping.axis,
-          sign: mapping.sign,
-          raw,
-          delta: null,
-          hasReading: true,
-        });
         return;
       }
       if (baseline === null) {
         finishCalibration(raw);
       }
       const delta = normalize((raw - (baseline ?? raw)) * mapping.sign);
-
-      setDebug({
-        angle,
-        axis: mapping.axis,
-        sign: mapping.sign,
-        raw,
-        delta,
-        hasReading: true,
-      });
 
       if (!armed) {
         if (Math.abs(delta) <= NEUTRAL_DEG) armed = true;
@@ -221,6 +182,5 @@ export function useTilt(options: {
     calibrating: active && calibrating,
     ready: active && ready,
     requestPermission,
-    debug: active ? debug : null,
   };
 }

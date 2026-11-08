@@ -10,17 +10,16 @@ import {
   type Route,
 } from "./router";
 
-const GameCard = ({
-  to,
-  title,
-  blurb,
-  accent,
-}: {
+type GameCardProps = {
   to: Route;
   title: string;
   blurb: string;
-  accent: string;
-}) => (
+  emoji: string;
+  tag: string;
+  accent: "teal" | "amber" | "indigo";
+};
+
+const GameCard = ({ to, title, blurb, emoji, tag, accent }: GameCardProps) => (
   <a
     href={to}
     onClick={(e) => {
@@ -28,46 +27,63 @@ const GameCard = ({
       e.preventDefault();
       navigate(to);
     }}
-    className="group block rounded-3xl border border-white/10 bg-stage-900/70 p-6 text-center transition active:scale-[0.98] hover:border-gold-500/40"
+    className={`hub-card hub-card-${accent}`}
   >
-    <span
-      className={`block font-display text-3xl font-black tracking-tight ${accent}`}
-    >
-      {title}
+    <span className="hub-card-accent" aria-hidden />
+    <span className="hub-card-top">
+      <span className="hub-card-emoji" aria-hidden>
+        {emoji}
+      </span>
+      <span className="hub-card-tag">{tag}</span>
     </span>
-    <span className="mt-2 block text-sm text-muted">{blurb}</span>
-    <span className="mt-4 block text-xs font-black uppercase tracking-[0.3em] text-gold-400 opacity-0 transition group-hover:opacity-100">
-      Play →
+    <span className="hub-card-title">{title}</span>
+    <span className="hub-card-blurb">{blurb}</span>
+    <span className="hub-card-cta" aria-hidden>
+      Play
+      <span className="hub-card-arrow">→</span>
     </span>
   </a>
 );
 
 const Lobby = () => (
-  <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center bg-stage-void px-4 py-10">
-    <h1 className="text-center font-display text-4xl font-black tracking-tight text-gold-400">
-      GAMES
-    </h1>
-    <p className="mt-2 text-center text-sm text-muted">Pick your poison.</p>
-    <div className="mt-8 grid w-full gap-4">
-      <GameCard
-        to="/forehead-charades"
-        title="FOREHEAD CHARADES"
-        blurb="Hold the phone up. Guess the word. Beat the clock."
-        accent="text-emerald-300"
-      />
-      <GameCard
-        to="/money-ladder"
-        title="THE MONEY LADDER"
-        blurb="Fifteen rungs, one life, £1,000,000."
-        accent="text-gold-300"
-      />
-      <GameCard
-        to="/word-grid"
-        title="WORD GRID"
-        blurb="Find the words before the three minutes run out."
-        accent="text-indigo-300"
-      />
-    </div>
+  <div className="hub-shell">
+    <div className="hub-bg" aria-hidden />
+    <main className="hub-main safe-area">
+      <header className="hub-header">
+        <p className="hub-kicker">Arcade</p>
+        <h1 className="hub-title">What are we playing?</h1>
+        <p className="hub-subtitle">
+          Pick a game and jump in.
+        </p>
+      </header>
+
+      <div className="hub-grid">
+        <GameCard
+          to="/forehead-charades"
+          title="Forehead Charades"
+          blurb="Hold the phone up, get clues from your team, and beat the clock."
+          emoji="🙈"
+          tag="Pass the phone"
+          accent="teal"
+        />
+        <GameCard
+          to="/money-ladder"
+          title="The Money Ladder"
+          blurb="Climb fifteen rungs, use your lifelines, and chase the top prize."
+          emoji="💰"
+          tag="Quiz"
+          accent="amber"
+        />
+        <GameCard
+          to="/word-grid"
+          title="Word Grid"
+          blurb="Find as many words as you can before the three minutes run out."
+          emoji="🔤"
+          tag="Word game"
+          accent="indigo"
+        />
+      </div>
+    </main>
   </div>
 );
 
