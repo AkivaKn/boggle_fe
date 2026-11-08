@@ -101,7 +101,7 @@ export const Results: React.FC<ResultsProps> = ({
         sub: `You walk away with ${GBP(myAmount)}.`,
       };
     else if (mine.status === "won")
-      headline = { title: "MILLIONAIRE!", cls: "text-gold-300" };
+      headline = { title: "TOP OF THE LADDER!", cls: "text-gold-300" };
   }
 
   // Stats chips: reached level (only when unambiguous — the guard above)

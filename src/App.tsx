@@ -1,24 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 import BoggleApp from "./games/BoggleApp";
+import ForeheadCharadesApp from "./games/headsup/App";
 import MillionaireApp from "./games/millionaire/App";
-import { navigate, resolveRoute, type Route } from "./router";
+import {
+  isHeadSupPath,
+  navigate,
+  resolveHeadSupRoute,
+  resolveRoute,
+  type Route,
+} from "./router";
 
-/**
- * The GAMES HUB — one SPA serving every game from one endpoint.
- *
- * Why hand-rolled instead of a router package: the whole app is two games and
- * three routes, and the deploy already builds this repo with a plain
- * `npm run build`. A dependency here would be a dependency to re-audit on
- * every bump for three routes' worth of behaviour. History API + a popstate
- * listener is the entire requirement.
- *
- * Route table (deliberately shallow):
- *   /            the lobby — pick a game
- *   /boggle      Boggle
- *   /millionaire Millionaire
- * Anything else falls back to the lobby, so a stale bookmark can never land
- * the player on a blank screen.
- */
 const GameCard = ({
   to,
   title,
@@ -33,7 +24,6 @@ const GameCard = ({
   <a
     href={to}
     onClick={(e) => {
-      // Left-click, no modifier: let the browser handle the rest (new tab).
       if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
       e.preventDefault();
       navigate(to);
@@ -60,14 +50,20 @@ const Lobby = () => (
     <p className="mt-2 text-center text-sm text-muted">Pick your poison.</p>
     <div className="mt-8 grid w-full gap-4">
       <GameCard
-        to="/millionaire"
-        title="WHO WANTS TO BE A MILLIONAIRE?"
+        to="/forehead-charades"
+        title="FOREHEAD CHARADES"
+        blurb="Hold the phone up. Guess the word. Beat the clock."
+        accent="text-emerald-300"
+      />
+      <GameCard
+        to="/money-ladder"
+        title="THE MONEY LADDER"
         blurb="Fifteen rungs, one life, £1,000,000."
         accent="text-gold-300"
       />
       <GameCard
-        to="/boggle"
-        title="BOGGLE"
+        to="/word-grid"
+        title="WORD GRID"
         blurb="Find the words before the three minutes run out."
         accent="text-indigo-300"
       />
@@ -76,12 +72,10 @@ const Lobby = () => (
 );
 
 export default function App() {
-  const [route, setRoute] = useState<Route>(() =>
-    resolveRoute(window.location.pathname),
-  );
+  const [path, setPath] = useState(() => window.location.pathname);
 
   const sync = useCallback(() => {
-    setRoute(resolveRoute(window.location.pathname));
+    setPath(window.location.pathname);
   }, []);
 
   useEffect(() => {
@@ -89,12 +83,12 @@ export default function App() {
     return () => window.removeEventListener("popstate", sync);
   }, [sync]);
 
-  // Each game keeps its state in localStorage keyed by its own namespace, so
-  // moving between games must NOT unmount-and-recreate the other one
-  // silently — but rendering exactly one at a time is the point: the two
-  // games are independent machines, and a lobby → game → back → game cycle
-  // simply remounts (which is what each game's own mount logic expects).
-  if (route === "/boggle") return <BoggleApp />;
-  if (route === "/millionaire") return <MillionaireApp />;
+  if (isHeadSupPath(path)) {
+    return <ForeheadCharadesApp route={resolveHeadSupRoute(path)} />;
+  }
+
+  const route: Route = resolveRoute(path);
+  if (route === "/word-grid") return <BoggleApp />;
+  if (route === "/money-ladder") return <MillionaireApp />;
   return <Lobby />;
 }

@@ -1,4 +1,4 @@
-# Games FE — the hub for Boggle & Millionaire
+# Games FE — Forehead Charades, Word Grid & The Money Ladder
 
 One React SPA serving **every game** from one endpoint. Built with React,
 TypeScript, Vite and Tailwind CSS.
@@ -8,8 +8,9 @@ TypeScript, Vite and Tailwind CSS.
 | Path | Screen |
 |---|---|
 | `/` | The lobby — pick a game |
-| `/boggle` | Boggle |
-| `/millionaire` | Millionaire |
+| `/forehead-charades` | Forehead Charades (client-only pass-the-phone) |
+| `/money-ladder` | The Money Ladder |
+| `/word-grid` | Word Grid |
 
 Unknown paths fall back to the lobby, so a stale bookmark never lands on a
 blank screen. Navigation is client-side (History API + `popstate`), so moving
@@ -19,26 +20,28 @@ between games never reloads the document.
 
 ```
 src/App.tsx                      the hub: lobby + route switch
-src/router.ts                    the three routes (hand-rolled on purpose —
-                                 no router dependency for three routes)
-src/games/BoggleApp.tsx          Boggle
-src/games/boggleApi.ts           Boggle's REST/WS client
-src/games/components_boggle/     Boggle's components
-src/games/millionaire/           Millionaire (app, api client, components)
+src/router.ts                    top-level routes + Forehead Charades sub-routes
+src/games/BoggleApp.tsx          Word Grid
+src/games/boggleApi.ts           Word Grid's REST/WS client
+src/games/components_boggle/     Word Grid's components
+src/games/millionaire/           The Money Ladder (app, api client, components)
+src/games/headsup/               Forehead Charades (client-only; no API calls)
 src/index.css                    the shared design system (Stage palette + tokens)
 ```
 
-Each game keeps its own state namespace (Boggle persists its room under
-`roomId`/`roomCode`, Millionaire under its own keys), so the two can never
-collide in one browser.
+Each game keeps its own state namespace (Word Grid persists its room under
+`roomId`/`roomCode`, The Money Ladder under its own keys, Forehead Charades
+under `foreheadCharades.*`), so they can never collide in one browser.
 
 ## Backend
 
-Both games talk to the **one** API in the sibling `boggle` repo, on their own
-route trees:
+The two server-backed games talk to the **one** API in the sibling `boggle`
+repo, on their own route trees:
 
-- Boggle → `/api/boggle/*`, `/ws/boggle/*`
-- Millionaire → `/api/millionaire/*`, `/ws/millionaire/*`
+- Word Grid → `/api/boggle/*`, `/ws/boggle/*`
+- The Money Ladder → `/api/millionaire/*`, `/ws/millionaire/*`
+- Forehead Charades → **no backend**: decks, scoring and tilt run entirely in
+  the browser; custom decks and the last setup live in localStorage.
 
 Set `VITE_API_URL` to the API origin (the devcontainer sets it to
 `http://localhost:8080`). It must be an origin the API's `ALLOWED_ORIGINS`
@@ -55,7 +58,12 @@ npm run lint
 
 ## Deployment
 
-The build command (`npm run build`) and publish dir (`dist/`) are unchanged
-from when this repo served Boggle alone. `public/_redirects` supplies the SPA
-history fallback, so `/boggle` and `/millionaire` work as direct links and
-survive a refresh inside a game.
+The build command is `npm run build`, with `dist/` as the publish directory.
+`public/_redirects` supplies the SPA history fallback, so `/word-grid`,
+`/money-ladder` and `/forehead-charades` work as direct links and survive a
+refresh inside a game.
+
+## Content & trademarks
+
+The display names and built-in Forehead Charades decks are original. The quiz
+game's question corpus is separate data, unchanged by the branding pass.

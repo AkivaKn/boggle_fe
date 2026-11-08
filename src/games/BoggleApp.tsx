@@ -163,7 +163,7 @@ function App() {
       <div className="max-w-md mx-auto py-4 px-4 flex flex-col items-center">
         <header className="text-center mb-4">
           <h1 className="text-4xl font-black text-indigo-600 tracking-tighter italic transform -rotate-1">
-            BOGGLE<span className="text-orange-500">.</span>
+            WORD GRID<span className="text-orange-500">.</span>
           </h1>
         </header>
 
