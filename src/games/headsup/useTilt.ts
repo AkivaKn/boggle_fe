@@ -7,11 +7,13 @@ const GESTURE_DEG = 32;
 const NEUTRAL_DEG = 14;
 const COOLDOWN_MS = 650;
 
-type Quaternion = {
-  w: number;
-  x: number;
-  y: number;
-  z: number;
+export type TiltDebugInfo = {
+  angle: number;
+  axis: "beta" | "gamma";
+  sign: 1 | -1;
+  raw: number | null;
+  delta: number | null;
+  hasReading: boolean;
 };
 
 export type TiltController = {
@@ -19,89 +21,28 @@ export type TiltController = {
   calibrating: boolean;
   ready: boolean;
   requestPermission: () => Promise<TiltPermission>;
+  debug: TiltDebugInfo | null;
 };
 
-const toRadians = (degrees: number): number => (degrees * Math.PI) / 180;
+const normalize = (degrees: number): number =>
+  (((degrees % 360) + 540) % 360) - 180;
 
-const axisQuaternion = (
-  x: number,
-  y: number,
-  z: number,
-  degrees: number,
-): Quaternion => {
-  const half = toRadians(degrees) / 2;
-  const sine = Math.sin(half);
-  return {
-    w: Math.cos(half),
-    x: x * sine,
-    y: y * sine,
-    z: z * sine,
-  };
-};
-
-const multiply = (a: Quaternion, b: Quaternion): Quaternion => ({
-  w: a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z,
-  x: a.w * b.x + a.x * b.w + a.y * b.z - a.z * b.y,
-  y: a.w * b.y - a.x * b.z + a.y * b.w + a.z * b.x,
-  z: a.w * b.z + a.x * b.y - a.y * b.x + a.z * b.w,
-});
-
-const conjugate = (q: Quaternion): Quaternion => ({
-  w: q.w,
-  x: -q.x,
-  y: -q.y,
-  z: -q.z,
-});
-
-const normalize = (q: Quaternion): Quaternion => {
-  const length = Math.hypot(q.w, q.x, q.y, q.z);
-  if (length === 0) return { w: 1, x: 0, y: 0, z: 0 };
-  return {
-    w: q.w / length,
-    x: q.x / length,
-    y: q.y / length,
-    z: q.z / length,
-  };
-};
-
-const dot = (a: Quaternion, b: Quaternion): number =>
-  a.w * b.w + a.x * b.x + a.y * b.y + a.z * b.z;
-
-const average = (samples: Quaternion[]): Quaternion => {
-  const first = samples[0];
-  const total = { w: 0, x: 0, y: 0, z: 0 };
-  for (const sample of samples) {
-    const aligned = dot(first, sample) < 0
-      ? { w: -sample.w, x: -sample.x, y: -sample.y, z: -sample.z }
-      : sample;
-    total.w += aligned.w;
-    total.x += aligned.x;
-    total.y += aligned.y;
-    total.z += aligned.z;
+const screenAngle = (): number => {
+  if (typeof screen !== "undefined" && typeof screen.orientation?.angle === "number") {
+    return screen.orientation.angle;
   }
-  return normalize(total);
+  const legacy = (window as Window & { orientation?: number }).orientation;
+  return typeof legacy === "number" ? legacy : 0;
 };
 
-const orientationQuaternion = (
-  alpha: number,
-  beta: number,
-  gamma: number,
-): Quaternion =>
-  multiply(
-    multiply(
-      axisQuaternion(0, 0, 1, alpha),
-      axisQuaternion(1, 0, 0, beta),
-    ),
-    axisQuaternion(0, 1, 0, gamma),
-  );
-
-const tiltAroundScreenAxis = (
-  current: Quaternion,
-  baseline: Quaternion,
-): number => {
-  const relative = normalize(multiply(conjugate(baseline), current));
-  const degrees = (2 * Math.atan2(relative.y, relative.w) * 180) / Math.PI;
-  return ((degrees + 540) % 360) - 180;
+const axisForAngle = (
+  angle: number,
+): { axis: "beta" | "gamma"; sign: 1 | -1 } => {
+  const normalized = ((angle % 360) + 360) % 360;
+  if (normalized === 90) return { axis: "gamma", sign: -1 };
+  if (normalized === 270) return { axis: "gamma", sign: 1 };
+  if (normalized === 180) return { axis: "beta", sign: -1 };
+  return { axis: "beta", sign: 1 };
 };
 
 const initialPermission = (): TiltPermission =>
@@ -117,6 +58,7 @@ export function useTilt(options: {
     useState<TiltPermission>(initialPermission);
   const [calibrating, setCalibrating] = useState(false);
   const [ready, setReady] = useState(false);
+  const [debug, setDebug] = useState<TiltDebugInfo | null>(null);
   const onGestureRef = useRef(options.onGesture);
 
   useEffect(() => {
@@ -160,17 +102,17 @@ export function useTilt(options: {
   useEffect(() => {
     if (!options.enabled || permission !== "granted") return;
 
-    let baseline: Quaternion | null = null;
-    const samples: Quaternion[] = [];
+    let baseline: number | null = null;
+    const samples: number[] = [];
     let startedAt = performance.now();
     let armed = false;
     let lastFireAt = 0;
     let disposed = false;
 
-    const finishCalibration = (fallback: Quaternion | null) => {
+    const finishCalibration = (fallback: number | null) => {
       if (baseline !== null) return;
       if (samples.length > 0) {
-        baseline = average(samples);
+        baseline = samples.reduce((sum, value) => sum + value, 0) / samples.length;
       } else if (fallback !== null) {
         baseline = fallback;
       } else {
@@ -182,27 +124,49 @@ export function useTilt(options: {
 
     const handle = (event: DeviceOrientationEvent) => {
       if (disposed) return;
-      const beta = event.beta;
-      const gamma = event.gamma;
-      if (
-        beta === null ||
-        gamma === null ||
-        Number.isNaN(beta) ||
-        Number.isNaN(gamma)
-      ) {
+      const angle = screenAngle();
+      const mapping = axisForAngle(angle);
+      const rawValue = mapping.axis === "beta" ? event.beta : event.gamma;
+      const raw = rawValue !== null && !Number.isNaN(rawValue) ? rawValue : null;
+
+      if (raw === null) {
+        setDebug({
+          angle,
+          axis: mapping.axis,
+          sign: mapping.sign,
+          raw: null,
+          delta: null,
+          hasReading: false,
+        });
         return;
       }
 
-      const current = orientationQuaternion(event.alpha ?? 0, beta, gamma);
       const now = performance.now();
       if (now - startedAt < CALIBRATION_MS) {
-        samples.push(current);
+        samples.push(raw);
+        setDebug({
+          angle,
+          axis: mapping.axis,
+          sign: mapping.sign,
+          raw,
+          delta: null,
+          hasReading: true,
+        });
         return;
       }
       if (baseline === null) {
-        finishCalibration(current);
+        finishCalibration(raw);
       }
-      const delta = tiltAroundScreenAxis(current, baseline ?? current);
+      const delta = normalize((raw - (baseline ?? raw)) * mapping.sign);
+
+      setDebug({
+        angle,
+        axis: mapping.axis,
+        sign: mapping.sign,
+        raw,
+        delta,
+        hasReading: true,
+      });
 
       if (!armed) {
         if (Math.abs(delta) <= NEUTRAL_DEG) armed = true;
@@ -228,6 +192,8 @@ export function useTilt(options: {
       samples.length = 0;
       startedAt = performance.now() - CALIBRATION_MS;
       armed = false;
+      setCalibrating(true);
+      setReady(false);
     };
     const onVisibility = () => {
       if (!document.hidden) resetCalibration();
@@ -255,5 +221,6 @@ export function useTilt(options: {
     calibrating: active && calibrating,
     ready: active && ready,
     requestPermission,
+    debug: active ? debug : null,
   };
 }
