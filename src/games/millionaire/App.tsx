@@ -2271,13 +2271,13 @@ function App() {
           wide ? "max-w-2xl" : "max-w-md"
         }`}
       >
-        {/* Gold MILLIONAIRE masthead — show's serif/display feel (system
+        {/* Gold MONEY LADDER masthead — show's serif/display feel (system
             serif stack; no external fonts). UX v3: NO status chips and NO
             connection label — failures surface only via the error banner. */}
         <header className={`text-center ${wide ? "mb-4" : "mb-8"}`}>
           {!wide && (
             <p className="text-xs font-bold uppercase tracking-[0.4em] text-gold-500/70">
-              Who wants to be a
+              The
             </p>
           )}
           <h1
@@ -2285,7 +2285,7 @@ function App() {
               wide ? "text-2xl md:text-4xl" : "text-4xl"
             }`}
           >
-            MILLIONAIRE
+            MONEY LADDER
           </h1>
         </header>
 

@@ -1,23 +1,58 @@
-/**
- * The hub's router — three routes, deliberately hand-rolled.
- *
- * This lives apart from the components on purpose: `react-refresh` only
- * hot-reloads a module that exports components alone, and a fast-refresh
- * break in the file that switches games would be a confusing thing to debug.
- */
-export type Route = "/" | "/boggle" | "/millionaire";
+export type Route =
+  | "/"
+  | "/word-grid"
+  | "/money-ladder"
+  | "/forehead-charades";
 
-const ROUTES: Route[] = ["/", "/boggle", "/millionaire"];
+export type HeadSupRoute = "home" | "setup" | "howto" | "decks" | "game";
 
-/** Resolve a pathname to a known route (unknown → the lobby). */
+const ROUTES: Route[] = [
+  "/",
+  "/word-grid",
+  "/money-ladder",
+  "/forehead-charades",
+];
+
+const FOREHEAD_PREFIX = "/forehead-charades";
+
+const cleanPath = (pathname: string): string =>
+  pathname.replace(/\/+$/, "") || "/";
+
 export const resolveRoute = (pathname: string): Route => {
-  const clean = pathname.replace(/\/+$/, "") || "/";
+  const clean = cleanPath(pathname);
   return (ROUTES as string[]).includes(clean) ? (clean as Route) : "/";
 };
 
-/** Client-side navigation: push the path, then let the listener re-render. */
-export const navigate = (to: Route) => {
-  if (window.location.pathname === to) return;
+export const isHeadSupPath = (pathname: string): boolean => {
+  const clean = cleanPath(pathname);
+  return clean === FOREHEAD_PREFIX || clean.startsWith(`${FOREHEAD_PREFIX}/`);
+};
+
+export const resolveHeadSupRoute = (pathname: string): HeadSupRoute => {
+  switch (cleanPath(pathname)) {
+    case `${FOREHEAD_PREFIX}/setup`:
+      return "setup";
+    case `${FOREHEAD_PREFIX}/how-to-play`:
+      return "howto";
+    case `${FOREHEAD_PREFIX}/decks`:
+      return "decks";
+    case `${FOREHEAD_PREFIX}/game`:
+      return "game";
+    default:
+      return "home";
+  }
+};
+
+export const navigate = (to: string) => {
+  const current = `${window.location.pathname}${window.location.search}`;
+  if (current === to) return;
   window.history.pushState({}, "", to);
+  window.dispatchEvent(new PopStateEvent("popstate"));
+};
+
+export const replace = (to: string) => {
+  const current = `${window.location.pathname}${window.location.search}`;
+  if (current === to) return;
+  window.history.replaceState({}, "", to);
   window.dispatchEvent(new PopStateEvent("popstate"));
 };
