@@ -3,7 +3,8 @@ import type { TiltGesture, TiltPermission } from "./types";
 
 const CALIBRATION_MS = 700;
 const CALIBRATION_TIMEOUT_MS = 1300;
-const GESTURE_DEG = 40;
+const CORRECT_DEG = 40;
+const PASS_DEG = 32;
 const NEUTRAL_DEG = 14;
 const COOLDOWN_MS = 650;
 
@@ -135,11 +136,11 @@ export function useTilt(options: {
       }
       if (now - lastFireAt < COOLDOWN_MS) return;
 
-      if (delta >= GESTURE_DEG) {
+      if (delta >= CORRECT_DEG) {
         lastFireAt = now;
         armed = false;
         onGestureRef.current("correct");
-      } else if (delta <= -GESTURE_DEG) {
+      } else if (delta <= -PASS_DEG) {
         lastFireAt = now;
         armed = false;
         onGestureRef.current("pass");

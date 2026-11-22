@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { currentPlayer, currentWord } from "../game";
+import { currentWord } from "../game";
 import type { ActiveGame, TiltGesture } from "../types";
 import type { TiltController } from "../useTilt";
 import { useTurnClock } from "../useTurnClock";
@@ -26,8 +26,6 @@ export function PlayScreen({
     typeof navigator !== "undefined" && navigator.maxTouchPoints > 0;
   const waitingForCalibration =
     tilt.permission === "granted" && tilt.calibrating && touchDevice;
-  const tiltUnavailable =
-    tilt.permission !== "granted" || (!tilt.calibrating && !tilt.ready);
 
   return (
     <div className="fc-play relative">
@@ -49,7 +47,6 @@ export function PlayScreen({
           onManagePlayers={onManagePlayers}
           onSettings={onSettings}
           onHome={onHome}
-          tiltUnavailable={tiltUnavailable}
         />
       )}
     </div>
@@ -63,7 +60,6 @@ function RoundBody({
   onManagePlayers,
   onSettings,
   onHome,
-  tiltUnavailable,
 }: {
   game: ActiveGame;
   onScore: (gesture: TiltGesture) => void;
@@ -71,9 +67,7 @@ function RoundBody({
   onManagePlayers: () => void;
   onSettings: () => void;
   onHome: () => void;
-  tiltUnavailable: boolean;
 }) {
-  const player = currentPlayer(game);
   const word = currentWord(game);
   const { remainingSec, progress, paused, pause, resume } = useTurnClock(
     game.turnSeconds,
@@ -132,16 +126,20 @@ function RoundBody({
         />
       </div>
 
-      <button
-        type="button"
-        className="fc-zone fc-zone-pass"
-        onClick={() => onScore("pass")}
-      >
-        <span className="fc-zone-arrow" aria-hidden>
-          ↑
-        </span>
-        <span className="fc-zone-label">Pass</span>
-      </button>
+      <div aria-hidden>
+        <button
+          type="button"
+          tabIndex={-1}
+          className="fc-tap-zone fc-tap-zone-pass"
+          onClick={() => onScore("pass")}
+        />
+        <button
+          type="button"
+          tabIndex={-1}
+          className="fc-tap-zone fc-tap-zone-correct"
+          onClick={() => onScore("correct")}
+        />
+      </div>
 
       <div className="fc-stage">
         <button
@@ -154,11 +152,6 @@ function RoundBody({
           <span className="sr-only">Menu</span>
         </button>
 
-        <p className="fc-tally">
-          <span>{player.name}</span>
-          <span aria-label="Correct guesses">✓ {game.turn.correct}</span>
-          <span aria-label="Passes">✕ {game.turn.passed}</span>
-        </p>
         <h2 key={`${game.cursor}-${word}`} className="fc-word fc-word-in">
           {word}
         </h2>
@@ -168,21 +161,7 @@ function RoundBody({
         >
           {remainingSec}s
         </p>
-        <p className="fc-hint">
-          {tiltUnavailable ? "Tap to score" : "Tilt ↓ correct · ↑ pass"}
-        </p>
       </div>
-
-      <button
-        type="button"
-        className="fc-zone fc-zone-correct"
-        onClick={() => onScore("correct")}
-      >
-        <span className="fc-zone-arrow" aria-hidden>
-          ↓
-        </span>
-        <span className="fc-zone-label">Correct</span>
-      </button>
 
       {paused && (
         <div className="fc-overlay">

@@ -53,9 +53,9 @@ export function HowToPlay({ onBack }: { onBack: () => void }) {
               calibrate to how you are holding the phone.
             </li>
             <li>
-              If motion controls are unavailable or blocked, the top and bottom
-              tap zones do exactly the same job. On desktop, use the keyboard:
-              Space/↓ = correct, ↑ = pass.
+              If motion controls are unavailable or blocked, tap the bottom half
+              of the screen to score or the top half to pass. On desktop, use
+              the keyboard: Space/↓ = correct, ↑ = pass.
             </li>
           </ul>
         </section>
