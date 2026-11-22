@@ -22,20 +22,6 @@
     "Avenir Next", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
 }
 
-.fc-theme::before {
-  position: absolute;
-  inset: 0 0 auto;
-  z-index: 2;
-  height: 8px;
-  background: linear-gradient(
-    90deg,
-    var(--fc-coral) 0 33.33%,
-    var(--fc-yellow) 33.33% 66.66%,
-    var(--fc-teal) 66.66% 100%
-  );
-  content: "";
-}
-
 .fc-bg {
   background-color: var(--fc-paper);
   background-image:
