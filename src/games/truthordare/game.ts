@@ -53,6 +53,7 @@ export const createGame = (config: SetupConfig): ActiveGame => {
     used: { truth: [], dare: [] },
     currentPrompt: null,
     stage: "choose",
+    drinkingMode: config.drinkingMode,
   };
 };
 
@@ -66,7 +67,10 @@ export const drawPrompt = (
   excludeId?: string,
 ): ActiveGame => {
   const available = PROMPTS.filter(
-    (prompt) => prompt.kind === kind && game.levels.includes(prompt.level),
+    (prompt) =>
+      prompt.kind === kind &&
+      (!prompt.drinking || game.drinkingMode) &&
+      (game.levels.includes(prompt.level) || (prompt.drinking && game.drinkingMode)),
   );
   let used = game.used[kind];
   let candidates = available.filter(
@@ -97,6 +101,8 @@ export const nextTurn = (game: ActiveGame): ActiveGame => ({
   stage: "choose",
 });
 
+export const forfeitPrompt = (game: ActiveGame): ActiveGame => nextTurn(game);
+
 export const finishGame = (game: ActiveGame): ActiveGame => ({
   ...game,
   currentPrompt: null,
@@ -108,4 +114,5 @@ export const restartGame = (game: ActiveGame): ActiveGame =>
     playerNames: game.players.map((player) => player.name),
     levels: game.levels,
     shuffleOrder: true,
+    drinkingMode: game.drinkingMode,
   });

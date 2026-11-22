@@ -21,9 +21,19 @@ export function HowToPlay({ onBack }: { onBack: () => void }) {
           <li>That player chooses Truth or Dare.</li>
           <li>Read the prompt aloud and answer or complete it.</li>
           <li>
-            Tap Next to pass the phone along. Swap or skip any prompt.
+            Tap Next to pass the phone along. Swap or skip any prompt (unless
+            Drinking mode is on).
           </li>
         </ol>
+      </div>
+
+      <div className="tod-panel">
+        <h2 className="tod-section-title">Drinking mode</h2>
+        <p className="tod-body-copy">
+          Turn on Drinking mode in setup for drink forfeits and drinking dares.
+          In drinking mode there’s no Swap prompt — do it, or take the prompt’s
+          forfeit shown on the card.
+        </p>
       </div>
 
       <div className="tod-panel">

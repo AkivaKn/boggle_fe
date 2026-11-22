@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { LEVEL_META, currentPlayer } from "../game";
 import type { ActiveGame, TodKind } from "../types";
 
@@ -7,6 +8,7 @@ export function Game({
   onDraw,
   onSwap,
   onDone,
+  onForfeit,
   onFinish,
   onPlayAgain,
   onChangeSetup,
@@ -17,6 +19,7 @@ export function Game({
   onDraw: (kind: TodKind) => void;
   onSwap: () => void;
   onDone: () => void;
+  onForfeit: () => void;
   onFinish: () => void;
   onPlayAgain: () => void;
   onChangeSetup: () => void;
@@ -116,7 +119,12 @@ export function Game({
             <span className={`tod-kind tod-kind-${prompt.kind}`}>
               {prompt.kind}
             </span>
-            {game.levels.length > 1 && (
+            {prompt.drinking && (
+              <span className="tod-drink-badge" aria-label="Drinking prompt">
+                <span aria-hidden>🥃</span> Drink
+              </span>
+            )}
+            {!prompt.drinking && game.levels.length > 1 && (
               <span
                 className={`tod-level-badge tod-level-badge-${prompt.level}`}
               >
@@ -126,13 +134,15 @@ export function Game({
           </div>
           <p className="tod-prompt-text">{prompt.text}</p>
           <div className="tod-prompt-actions">
-            <button
-              type="button"
-              className="tod-btn tod-btn-ghost"
-              onClick={onSwap}
-            >
-              Swap prompt
-            </button>
+            {!game.drinkingMode && (
+              <button
+                type="button"
+                className="tod-btn tod-btn-ghost"
+                onClick={onSwap}
+              >
+                Swap prompt
+              </button>
+            )}
             <button
               type="button"
               className="tod-btn tod-btn-primary"
@@ -140,66 +150,81 @@ export function Game({
             >
               Next
             </button>
+            {game.drinkingMode && (
+              <button
+                type="button"
+                className="tod-btn tod-btn-forfeit"
+                onClick={onForfeit}
+                aria-label={`Forfeit: ${prompt.forfeit} drink${prompt.forfeit === 1 ? "" : "s"}`}
+              >
+                <span>Forfeit</span>
+                <span className="tod-forfeit-amount" aria-hidden>
+                  {prompt.forfeit} 🥃
+                </span>
+              </button>
+            )}
           </div>
         </div>
       )}
 
-      {menuOpen && (
-        <div
-          className="tod-modal-backdrop"
-          role="presentation"
-          onClick={() => setMenuOpen(false)}
-        >
+      {menuOpen &&
+        createPortal(
           <div
-            className="tod-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="tod-menu-title"
-            onClick={(event) => event.stopPropagation()}
+            className="tod-modal-backdrop tod-theme"
+            role="presentation"
+            onClick={() => setMenuOpen(false)}
           >
-            <p className="tod-eyebrow">Game menu</p>
-            <h2 id="tod-menu-title" className="tod-modal-title">
-              Paused
-            </h2>
-            <p className="tod-body-copy">
-              Take a breather, or end this game and start fresh.
-            </p>
-            <div className="tod-modal-actions">
-              <button
-                type="button"
-                className="tod-btn tod-btn-primary"
-                onClick={() => setMenuOpen(false)}
-                autoFocus
-              >
-                Keep playing
-              </button>
-              <button
-                type="button"
-                className="tod-btn tod-btn-ghost"
-                onClick={() => {
-                  setMenuOpen(false);
-                  onFinish();
-                }}
-              >
-                End game
-              </button>
-              <button
-                type="button"
-                className="tod-btn tod-btn-ghost"
-                onClick={() => {
-                  setMenuOpen(false);
-                  onChangeSetup();
-                }}
-              >
-                Change setup
-              </button>
-              <button type="button" className="tod-link" onClick={onHome}>
-                Back to home
-              </button>
+            <div
+              className="tod-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="tod-menu-title"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <p className="tod-eyebrow">Game menu</p>
+              <h2 id="tod-menu-title" className="tod-modal-title">
+                Paused
+              </h2>
+              <p className="tod-body-copy">
+                Take a breather, or end this game and start fresh.
+              </p>
+              <div className="tod-modal-actions">
+                <button
+                  type="button"
+                  className="tod-btn tod-btn-primary"
+                  onClick={() => setMenuOpen(false)}
+                  autoFocus
+                >
+                  Keep playing
+                </button>
+                <button
+                  type="button"
+                  className="tod-btn tod-btn-ghost"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onFinish();
+                  }}
+                >
+                  End game
+                </button>
+                <button
+                  type="button"
+                  className="tod-btn tod-btn-ghost"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onChangeSetup();
+                  }}
+                >
+                  Change setup
+                </button>
+                <button type="button" className="tod-link" onClick={onHome}>
+                  Back to home
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </section>
   );
 }
