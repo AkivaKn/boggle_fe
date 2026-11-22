@@ -57,8 +57,8 @@ export function Home({
             3
           </span>
           <span>
-            Tilt the phone down for a correct guess, up to pass — or use the big
-            tap zones. Highest score wins.
+            Tilt the phone down for a correct guess, up to pass. Highest score
+            wins.
           </span>
         </li>
       </ol>

@@ -73,15 +73,14 @@ export function TurnIntro({
           You will not see the word — they will clue it.
         </p>
         <p className="fc-muted mt-2 text-sm">
-          {turnSeconds} seconds. Tilt down for correct, up to pass — or use the
-          tap zones.
+          {turnSeconds} seconds. Tilt down for correct, up to pass.
         </p>
 
         {(tiltBlocked || tiltUnsupported) && (
           <p className="fc-banner fc-banner-warning mt-4" role="status">
             {tiltBlocked
-              ? "Motion access was blocked — use the big tap zones instead."
-              : "Motion controls are not available here — use the tap zones or keyboard."}
+              ? "Motion access was blocked — tap the bottom half to score or the top half to pass."
+              : "Motion controls are not available here — tap the bottom half to score, the top half to pass, or use the keyboard."}
           </p>
         )}
 
