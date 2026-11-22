@@ -1,0 +1,992 @@
+.tod-theme {
+  --tod-night: #120b1a;
+  --tod-plum: #251536;
+  --tod-plum-deep: #1b0f28;
+  --tod-surface: rgba(255, 255, 255, 0.055);
+  --tod-ink: #1b1024;
+  --tod-cream: #fff7ea;
+  --tod-muted: #bfb0cc;
+  --tod-pink: #ff5d8f;
+  --tod-pink-soft: #ffd9e4;
+  --tod-blue: #64d8f5;
+  --tod-blue-soft: #d9f7ff;
+  --tod-amber: #ffc857;
+  --tod-line: rgba(255, 255, 255, 0.12);
+  --tod-display:
+    "Avenir Next", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--tod-night);
+  color: var(--tod-cream);
+  color-scheme: dark;
+  font-family: var(--tod-display);
+}
+
+.tod-theme button,
+.tod-theme input {
+  font: inherit;
+}
+
+.tod-shell {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
+.tod-bg {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 50% at 12% 0%, rgba(255, 93, 143, 0.24), transparent 60%),
+    radial-gradient(ellipse 55% 50% at 95% 20%, rgba(100, 216, 245, 0.16), transparent 55%),
+    radial-gradient(ellipse 70% 55% at 50% 120%, rgba(139, 92, 246, 0.18), transparent 60%),
+    linear-gradient(180deg, #1b0f28 0%, #120b1a 55%, #0c0713 100%);
+}
+
+.tod-bg::after {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 247, 234, 0.18) 1px, transparent 1.2px);
+  background-size: 22px 22px;
+  content: "";
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 75%);
+  opacity: 0.3;
+}
+
+.tod-frame {
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  max-width: 56rem;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 auto;
+  padding:
+    max(1rem, env(safe-area-inset-top))
+    max(1rem, env(safe-area-inset-right))
+    max(1.25rem, env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
+}
+
+.tod-screen {
+  display: flex;
+  width: 100%;
+  max-width: 44rem;
+  flex: 1;
+  flex-direction: column;
+}
+
+.tod-back {
+  align-self: flex-start;
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 0.35rem;
+  border: 0;
+  background: transparent;
+  color: var(--tod-muted);
+  cursor: pointer;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  padding: 0.25rem 0;
+  text-transform: uppercase;
+}
+
+.tod-back:hover {
+  color: var(--tod-cream);
+}
+
+.tod-home {
+  justify-content: center;
+  padding-block: 1.5rem;
+}
+
+.tod-home-card {
+  width: 100%;
+  border: 1px solid var(--tod-line);
+  border-radius: 2rem;
+  background:
+    linear-gradient(150deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.025) 55%),
+    rgba(37, 21, 54, 0.68);
+  box-shadow:
+    0 30px 70px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  padding: clamp(1.35rem, 5vw, 2.6rem);
+  text-align: center;
+}
+
+.tod-eyebrow {
+  margin: 0;
+  color: var(--tod-pink);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.tod-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0.5rem 0 0;
+  color: var(--tod-cream);
+  font-size: clamp(3.2rem, 16vw, 5.6rem);
+  font-weight: 900;
+  letter-spacing: -0.065em;
+  line-height: 0.86;
+}
+
+.tod-logo-or {
+  margin: 0.12em 0;
+  color: var(--tod-pink);
+  font-size: 0.26em;
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: 0.34em;
+  line-height: 1;
+  padding-left: 0.34em;
+  text-transform: uppercase;
+}
+
+.tod-tagline {
+  max-width: 30rem;
+  margin: 1rem auto 0;
+  color: var(--tod-muted);
+  font-size: 0.98rem;
+  line-height: 1.5;
+}
+
+.tod-pack-strip {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 1.25rem;
+}
+
+.tod-pack-chip,
+.tod-level-badge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--tod-line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--tod-cream);
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  padding: 0.38rem 0.65rem;
+  text-transform: uppercase;
+}
+
+.tod-pack-pg,
+.tod-level-badge-pg {
+  border-color: rgba(100, 216, 245, 0.42);
+  color: var(--tod-blue);
+}
+
+.tod-pack-spicy,
+.tod-level-badge-spicy {
+  border-color: rgba(255, 200, 87, 0.42);
+  color: var(--tod-amber);
+}
+
+.tod-pack-nsfw,
+.tod-level-badge-nsfw {
+  border-color: rgba(255, 93, 143, 0.48);
+  color: var(--tod-pink);
+}
+
+.tod-home-actions,
+.tod-setup-actions,
+.tod-final-actions {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1.35rem;
+}
+
+.tod-btn {
+  display: inline-flex;
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  padding: 0.7rem 1.2rem;
+  text-transform: uppercase;
+  transition:
+    transform 160ms ease-out,
+    background-color 160ms ease-out,
+    border-color 160ms ease-out,
+    color 160ms ease-out,
+    opacity 160ms ease-out;
+}
+
+.tod-btn:hover {
+  transform: translateY(-1px);
+}
+
+.tod-btn:active {
+  transform: translateY(0);
+}
+
+.tod-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+  transform: none;
+}
+
+.tod-btn:focus-visible,
+.tod-choice:focus-visible,
+.tod-level-card:focus-visible,
+.tod-back:focus-visible,
+.tod-icon-btn:focus-visible,
+.tod-link:focus-visible,
+.tod-input:focus-visible,
+.tod-player-input:focus-visible {
+  outline: 3px solid rgba(100, 216, 245, 0.9);
+  outline-offset: 2px;
+}
+
+.tod-btn-primary {
+  background: var(--tod-pink);
+  color: var(--tod-ink);
+}
+
+.tod-btn-primary:hover {
+  background: #ff7aa3;
+}
+
+.tod-btn-ghost {
+  border-color: var(--tod-line);
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--tod-cream);
+}
+
+.tod-btn-ghost:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.tod-btn-small {
+  min-height: 44px;
+  padding-inline: 1rem;
+}
+
+.tod-note {
+  max-width: 32rem;
+  margin: 0.9rem auto 0;
+  color: var(--tod-muted);
+  font-size: 0.76rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.tod-page-head {
+  margin-top: 1rem;
+}
+
+.tod-title {
+  margin: 0.25rem 0 0;
+  color: var(--tod-cream);
+  font-size: clamp(2rem, 8vw, 3rem);
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+
+.tod-page-head .tod-tagline {
+  margin-inline: 0;
+  text-align: left;
+}
+
+.tod-panel {
+  margin-top: 1rem;
+  border: 1px solid var(--tod-line);
+  border-radius: 1.25rem;
+  background: var(--tod-surface);
+  padding: 1.05rem;
+}
+
+.tod-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.tod-section-title {
+  margin: 0;
+  color: var(--tod-cream);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.tod-count {
+  color: var(--tod-muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tod-body-copy {
+  margin: 0.6rem 0 0;
+  color: var(--tod-muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.tod-rules {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0.7rem 0 0;
+  padding-left: 1.2rem;
+  color: var(--tod-muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.tod-rules strong {
+  color: var(--tod-cream);
+}
+
+.tod-player-list {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.8rem;
+}
+
+.tod-player-row {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr) 2.5rem;
+  align-items: center;
+  gap: 0.55rem;
+  border: 1px solid var(--tod-line);
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.35rem 0.45rem 0.35rem 0.6rem;
+}
+
+.tod-player-num {
+  display: inline-flex;
+  width: 1.75rem;
+  height: 1.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--tod-muted);
+  font-size: 0.7rem;
+  font-weight: 900;
+}
+
+.tod-player-input {
+  min-width: 0;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  color: var(--tod-cream);
+  font-size: 0.95rem;
+  font-weight: 800;
+  outline: none;
+  padding: 0.5rem 0.1rem;
+}
+
+.tod-player-input:focus {
+  border-bottom-color: var(--tod-pink);
+}
+
+.tod-icon-btn {
+  display: inline-flex;
+  width: 2.5rem;
+  height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--tod-line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--tod-muted);
+  cursor: pointer;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.tod-icon-btn:hover {
+  border-color: rgba(255, 93, 143, 0.5);
+  color: var(--tod-cream);
+}
+
+.tod-add-player {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.7rem;
+}
+
+.tod-input {
+  min-width: 0;
+  min-height: 46px;
+  flex: 1;
+  border: 1px solid var(--tod-line);
+  border-radius: 0.9rem;
+  background: rgba(0, 0, 0, 0.18);
+  color: var(--tod-cream);
+  outline: none;
+  padding: 0.55rem 0.8rem;
+}
+
+.tod-input::placeholder {
+  color: #8f7f9d;
+}
+
+.tod-input:focus {
+  border-color: var(--tod-pink);
+}
+
+.tod-form-hint {
+  margin: 0.65rem 0 0;
+  color: var(--tod-pink);
+  font-size: 0.78rem;
+}
+
+.tod-level-list {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.75rem;
+}
+
+.tod-level-card {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid var(--tod-line);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--tod-cream);
+  cursor: pointer;
+  padding: 0.7rem;
+  text-align: left;
+  transition:
+    border-color 160ms ease-out,
+    background-color 160ms ease-out;
+}
+
+.tod-level-card:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.tod-level-selected {
+  border-color: var(--tod-pink);
+  background: rgba(255, 93, 143, 0.11);
+}
+
+.tod-level-mark {
+  display: inline-flex;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--tod-line);
+  border-radius: 999px;
+  color: var(--tod-muted);
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.tod-level-pg .tod-level-mark {
+  color: var(--tod-blue);
+}
+
+.tod-level-spicy .tod-level-mark {
+  color: var(--tod-amber);
+}
+
+.tod-level-nsfw .tod-level-mark {
+  color: var(--tod-pink);
+}
+
+.tod-level-selected .tod-level-mark {
+  border-color: var(--tod-pink);
+  background: var(--tod-pink);
+  color: var(--tod-ink);
+}
+
+.tod-level-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.tod-level-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 1.02rem;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+
+.tod-level-rating {
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  color: var(--tod-muted);
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  padding: 0.18rem 0.38rem;
+}
+
+.tod-level-desc {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--tod-muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.tod-check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  margin-top: 1rem;
+  border: 1px solid var(--tod-line);
+  border-radius: 1rem;
+  background: var(--tod-surface);
+  padding: 0.8rem;
+}
+
+.tod-check {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  margin-top: 0.1rem;
+  accent-color: var(--tod-pink);
+}
+
+.tod-check-title {
+  display: block;
+  color: var(--tod-cream);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.tod-check-hint {
+  display: block;
+  margin-top: 0.12rem;
+  color: var(--tod-muted);
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.tod-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 4, 12, 0.78);
+  backdrop-filter: blur(6px);
+  padding: 1rem;
+}
+
+.tod-modal {
+  width: 100%;
+  max-width: 24rem;
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 1.5rem;
+  background: var(--tod-plum);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+  padding: 1.4rem;
+}
+
+.tod-modal-title {
+  margin: 0.25rem 0 0;
+  color: var(--tod-cream);
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+.tod-modal-actions {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 1.1rem;
+}
+
+.tod-link {
+  align-self: center;
+  border: 0;
+  background: transparent;
+  color: var(--tod-muted);
+  cursor: pointer;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  margin-top: 0.85rem;
+  padding: 0.5rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.tod-link:hover {
+  color: var(--tod-cream);
+}
+
+.tod-game {
+  flex: 1;
+}
+
+.tod-game-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.35rem;
+}
+
+.tod-player-name {
+  margin: 0.25rem 0 0.55rem;
+  color: var(--tod-cream);
+  font-size: clamp(2.4rem, 10vw, 4rem);
+  font-weight: 900;
+  letter-spacing: -0.06em;
+  line-height: 0.9;
+  overflow-wrap: anywhere;
+}
+
+.tod-level-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.tod-menu-btn {
+  width: 2.75rem;
+  height: 2.75rem;
+  color: var(--tod-cream);
+  font-size: 1.25rem;
+}
+
+.tod-choose {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.2rem 0;
+  text-align: center;
+}
+
+.tod-prompt-lead {
+  margin: 0;
+  color: var(--tod-cream);
+  font-size: clamp(1.35rem, 5.5vw, 2rem);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+}
+
+.tod-prompt-lead span {
+  color: var(--tod-pink);
+  font-weight: 900;
+}
+
+.tod-choice-grid {
+  display: grid;
+  width: 100%;
+  gap: 0.8rem;
+  margin-top: 1.2rem;
+}
+
+.tod-choice {
+  display: flex;
+  min-height: 9rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid transparent;
+  border-radius: 1.5rem;
+  cursor: pointer;
+  padding: 1rem;
+  text-align: center;
+  transition:
+    transform 160ms ease-out,
+    filter 160ms ease-out,
+    box-shadow 160ms ease-out;
+}
+
+.tod-choice:hover {
+  transform: translateY(-3px);
+}
+
+.tod-choice:active {
+  transform: translateY(0);
+}
+
+.tod-choice-truth {
+  border-color: rgba(100, 216, 245, 0.7);
+  background: linear-gradient(155deg, #e0f9ff 0%, var(--tod-blue-soft) 55%, #b8edff 100%);
+  box-shadow: 0 18px 40px rgba(100, 216, 245, 0.18);
+  color: var(--tod-ink);
+}
+
+.tod-choice-dare {
+  border-color: rgba(255, 93, 143, 0.75);
+  background: linear-gradient(155deg, #ffe9ef 0%, var(--tod-pink-soft) 55%, #ffc6d8 100%);
+  box-shadow: 0 18px 40px rgba(255, 93, 143, 0.2);
+  color: var(--tod-ink);
+}
+
+.tod-choice-icon {
+  display: inline-flex;
+  width: 2.4rem;
+  height: 2.4rem;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid currentColor;
+  border-radius: 999px;
+  font-size: 1.2rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.tod-choice-title {
+  margin-top: 0.45rem;
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.tod-prompt {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  margin-top: 0.8rem;
+  border: 2px solid transparent;
+  border-radius: 1.8rem;
+  padding: clamp(1.15rem, 4vw, 2.2rem);
+  color: var(--tod-ink);
+}
+
+.tod-prompt-truth {
+  border-color: rgba(100, 216, 245, 0.75);
+  background: linear-gradient(160deg, #eefbff 0%, var(--tod-blue-soft) 60%, #c3efff 100%);
+  box-shadow: 0 22px 50px rgba(100, 216, 245, 0.15);
+}
+
+.tod-prompt-dare {
+  border-color: rgba(255, 93, 143, 0.75);
+  background: linear-gradient(160deg, #fff1f5 0%, var(--tod-pink-soft) 60%, #ffd0de 100%);
+  box-shadow: 0 22px 50px rgba(255, 93, 143, 0.16);
+}
+
+.tod-prompt-in {
+  animation: tod-card-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes tod-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.tod-prompt-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.tod-kind {
+  display: inline-flex;
+  border: 2px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  line-height: 1;
+  padding: 0.36rem 0.62rem;
+  text-transform: uppercase;
+}
+
+.tod-kind-truth {
+  color: #087a95;
+}
+
+.tod-kind-dare {
+  color: #b51f52;
+}
+
+.tod-prompt .tod-level-badge {
+  border-color: currentColor;
+  background: transparent;
+  color: var(--tod-ink);
+  opacity: 0.68;
+}
+
+.tod-prompt-text {
+  margin: 0;
+  color: var(--tod-ink);
+  font-size: clamp(1.65rem, 6.4vw, 3rem);
+  font-weight: 900;
+  letter-spacing: -0.045em;
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.tod-prompt-actions {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 1.35rem;
+}
+
+.tod-prompt .tod-btn-primary {
+  background: var(--tod-ink);
+  color: var(--tod-cream);
+}
+
+.tod-prompt .tod-btn-primary:hover {
+  background: #312040;
+}
+
+.tod-prompt .tod-btn-ghost {
+  border-color: rgba(27, 16, 36, 0.3);
+  background: rgba(255, 255, 255, 0.28);
+  color: var(--tod-ink);
+}
+
+.tod-prompt .tod-btn-ghost:hover {
+  border-color: rgba(27, 16, 36, 0.55);
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.tod-final {
+  justify-content: center;
+}
+
+.tod-final-card {
+  border: 1px solid var(--tod-line);
+  border-radius: 2rem;
+  background:
+    linear-gradient(150deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.025) 55%),
+    rgba(37, 21, 54, 0.68);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.35);
+  padding: clamp(1.35rem, 5vw, 2.4rem);
+  text-align: center;
+}
+
+.tod-final-title {
+  margin: 0.3rem 0 0;
+  color: var(--tod-cream);
+  font-size: clamp(2.4rem, 10vw, 3.8rem);
+  font-weight: 900;
+  letter-spacing: -0.06em;
+  line-height: 0.95;
+}
+
+.tod-final-players {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 1.1rem;
+}
+
+.tod-final-player {
+  border: 1px solid var(--tod-line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--tod-cream);
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 0.4rem 0.65rem;
+}
+
+.tod-empty {
+  justify-content: center;
+}
+
+.tod-empty-card {
+  text-align: center;
+}
+
+.tod-empty-card .tod-setup-actions {
+  max-width: 22rem;
+  margin-inline: auto;
+}
+
+@media (min-width: 560px) {
+  .tod-choice-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tod-prompt-actions {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  }
+}
+
+@media (min-width: 720px) {
+  .tod-frame {
+    padding-inline: 2rem;
+  }
+
+  .tod-home-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tod-player-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tod-level-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .tod-level-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .tod-setup-actions {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tod-btn,
+  .tod-choice,
+  .tod-level-card,
+  .tod-prompt-in {
+    animation: none;
+    transition: none;
+  }
+}
