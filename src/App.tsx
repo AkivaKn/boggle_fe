@@ -2,11 +2,14 @@ import { useCallback, useEffect, useState } from "react";
 import BoggleApp from "./games/BoggleApp";
 import ForeheadCharadesApp from "./games/headsup/App";
 import MillionaireApp from "./games/millionaire/App";
+import TruthOrDareApp from "./games/truthordare/App";
 import {
   isHeadSupPath,
+  isTruthOrDarePath,
   navigate,
   resolveHeadSupRoute,
   resolveRoute,
+  resolveTruthOrDareRoute,
   type Route,
 } from "./router";
 
@@ -16,7 +19,7 @@ type GameCardProps = {
   blurb: string;
   emoji: string;
   tag: string;
-  accent: "teal" | "amber" | "indigo";
+  accent: "teal" | "amber" | "indigo" | "rose";
 };
 
 const GameCard = ({ to, title, blurb, emoji, tag, accent }: GameCardProps) => (
@@ -52,9 +55,7 @@ const Lobby = () => (
       <header className="hub-header">
         <p className="hub-kicker">Arcade</p>
         <h1 className="hub-title">What are we playing?</h1>
-        <p className="hub-subtitle">
-          Pick a game and jump in.
-        </p>
+        <p className="hub-subtitle">Pick a game and jump in.</p>
       </header>
 
       <div className="hub-grid">
@@ -65,6 +66,14 @@ const Lobby = () => (
           emoji="🙈"
           tag="Pass the phone"
           accent="teal"
+        />
+        <GameCard
+          to="/truth-or-dare"
+          title="Truth or Dare"
+          blurb="Pick a truth, take a dare, and mix the packs for the right group."
+          emoji="🎭"
+          tag="Party game"
+          accent="rose"
         />
         <GameCard
           to="/money-ladder"
@@ -101,6 +110,10 @@ export default function App() {
 
   if (isHeadSupPath(path)) {
     return <ForeheadCharadesApp route={resolveHeadSupRoute(path)} />;
+  }
+
+  if (isTruthOrDarePath(path)) {
+    return <TruthOrDareApp route={resolveTruthOrDareRoute(path)} />;
   }
 
   const route: Route = resolveRoute(path);
