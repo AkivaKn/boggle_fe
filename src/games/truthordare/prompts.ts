@@ -1,12 +1,36 @@
 import type { Prompt, TodKind, TodLevel } from "./types";
 
+const DEFAULT_FORFEIT: Record<TodLevel, number> = {
+  pg: 1,
+  spicy: 2,
+  nsfw: 3,
+};
+
 const pack = (level: TodLevel, kind: TodKind, texts: string[]): Prompt[] =>
   texts.map((text, index) => ({
     id: `${level}-${kind}-${index + 1}`,
     level,
     kind,
     text,
+    forfeit: DEFAULT_FORFEIT[level],
   }));
+
+const drinkingPack = (
+  kind: TodKind,
+  texts: Array<string | { text: string; forfeit: number }>,
+): Prompt[] =>
+  texts.map((item, index) => {
+    const text = typeof item === "string" ? item : item.text;
+    const forfeit = typeof item === "string" ? 2 : item.forfeit;
+    return {
+      id: `drinking-${kind}-${index + 1}`,
+      level: "spicy",
+      kind,
+      text,
+      forfeit,
+      drinking: true,
+    };
+  });
 
 export const PROMPTS: Prompt[] = [
   ...pack("pg", "truth", [
@@ -380,5 +404,25 @@ export const PROMPTS: Prompt[] = [
     "Share the most adventurous date you would like to go on.",
     "Give a toast to the person who would make the best secret agent.",
     "Tell the group one thing you find attractive that has nothing to do with looks.",
+  ]),
+  ...drinkingPack("dare", [
+    { text: "Take a sip. For the rest of this round, you have to shout “CHEERS” before every sip anyone takes.", forfeit: 1 },
+    { text: "Take a sip and then give your best dramatic toast to the person on your left.", forfeit: 1 },
+    { text: "Take two sips, then make up a new rule that lasts until your next turn.", forfeit: 2 },
+    { text: "Take a sip and speak in a pirate voice until your next turn.", forfeit: 1 },
+    { text: "Take a sip and swap seats with someone of your choice.", forfeit: 1 },
+    { text: "Take a sip, then point at someone — they have to tell a truth next round.", forfeit: 1 },
+    { text: "Finish your drink or take three big sips, then do your best victory dance.", forfeit: 3 },
+    { text: "Take a sip and let the group give you a nickname for the rest of the game.", forfeit: 1 },
+    { text: "Take two sips and then dare someone else to do something silly.", forfeit: 2 },
+    { text: "Take a sip every time you say “um” or “like” until your next turn.", forfeit: 1 },
+    { text: "Take a sip and hold eye contact with someone for ten seconds without laughing.", forfeit: 1 },
+    { text: "Take a sip, then tell the group your worst take — they vote, losers drink.", forfeit: 2 },
+  ]),
+  ...drinkingPack("truth", [
+    { text: "What’s the drunkest you’ve ever been? Take a sip while you tell it.", forfeit: 1 },
+    { text: "Who in this room would be the worst drinking buddy on a night out? Take a sip.", forfeit: 1 },
+    { text: "What’s your go-to drunk food? Take a sip if everyone agrees it’s a good one.", forfeit: 1 },
+    { text: "Have you ever texted someone you shouldn’t have after a few drinks? Take a sip if yes.", forfeit: 1 },
   ]),
 ];

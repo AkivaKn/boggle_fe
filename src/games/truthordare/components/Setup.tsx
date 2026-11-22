@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   LEVEL_META,
   MAX_NAME_LENGTH,
@@ -30,8 +31,11 @@ export function Setup({
   const [name, setName] = useState("");
   const [levels, setLevels] = useState<TodLevel[]>(initial.levels);
   const [shuffleOrder, setShuffleOrder] = useState(initial.shuffleOrder);
+  const [drinkingMode, setDrinkingMode] = useState(initial.drinkingMode);
   const [ageConfirmed, setAgeConfirmed] = useState(false);
-  const [ageGate, setAgeGate] = useState<"select" | "start" | null>(null);
+  const [ageGate, setAgeGate] = useState<
+    "nsfw-select" | "nsfw-start" | "drinking-toggle" | "drinking-start" | null
+  >(null);
 
   const cleanNames = players.map((player) => player.name.trim());
   const filledPlayers = cleanNames.filter(Boolean).length;
@@ -64,13 +68,18 @@ export function Setup({
   const start = () => {
     if (!canStart) return;
     if (levels.includes("nsfw") && !ageConfirmed) {
-      setAgeGate("start");
+      setAgeGate("nsfw-start");
+      return;
+    }
+    if (drinkingMode && !ageConfirmed) {
+      setAgeGate("drinking-start");
       return;
     }
     onStart({
       playerNames: cleanNames,
       levels,
       shuffleOrder,
+      drinkingMode,
     });
   };
 
@@ -80,24 +89,43 @@ export function Setup({
       return;
     }
     if (level === "nsfw" && !ageConfirmed) {
-      setAgeGate("select");
+      setAgeGate("nsfw-select");
       return;
     }
     setLevels((current) => [...current, level]);
   };
 
+  const toggleDrinkingMode = () => {
+    if (drinkingMode) {
+      setDrinkingMode(false);
+      return;
+    }
+    if (!ageConfirmed) {
+      setAgeGate("drinking-toggle");
+      return;
+    }
+    setDrinkingMode(true);
+  };
+
   const confirmAge = () => {
     setAgeConfirmed(true);
-    if (ageGate === "select") {
+    if (ageGate === "nsfw-select") {
       setLevels((current) =>
         current.includes("nsfw") ? current : [...current, "nsfw"],
       );
     }
-    if (ageGate === "start") {
+    if (ageGate === "drinking-toggle") {
+      setDrinkingMode(true);
+    }
+    if (ageGate === "nsfw-start" || ageGate === "drinking-start") {
       onStart({
         playerNames: cleanNames,
-        levels,
+        levels:
+          ageGate === "nsfw-start"
+            ? levels
+            : levels,
         shuffleOrder,
+        drinkingMode: ageGate === "drinking-start" ? true : drinkingMode,
       });
     }
     setAgeGate(null);
@@ -251,6 +279,21 @@ export function Setup({
         </span>
       </label>
 
+      <label className="tod-check-row">
+        <input
+          type="checkbox"
+          className="tod-check"
+          checked={drinkingMode}
+          onChange={toggleDrinkingMode}
+        />
+        <span>
+          <span className="tod-check-title">Drinking mode</span>
+          <span className="tod-check-hint">
+            Add drink forfeits and drinking dares. No swap prompts.
+          </span>
+        </span>
+      </label>
+
       <div className="tod-setup-actions">
         <button
           type="button"
@@ -265,47 +308,52 @@ export function Setup({
         </button>
       </div>
 
-      {ageGate && (
-        <div
-          className="tod-modal-backdrop"
-          role="presentation"
-          onClick={() => setAgeGate(null)}
-        >
+      {ageGate &&
+        createPortal(
           <div
-            className="tod-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="age-gate-title"
-            onClick={(event) => event.stopPropagation()}
+            className="tod-modal-backdrop tod-theme"
+            role="presentation"
+            onClick={() => setAgeGate(null)}
           >
-            <p className="tod-eyebrow">Before you start</p>
-            <h2 id="age-gate-title" className="tod-modal-title">
-              NSFW is 18+
-            </h2>
-            <p className="tod-body-copy">
-              This pack contains adult themes. Only continue if everyone
-              playing is 18 or over.
-            </p>
-            <div className="tod-modal-actions">
-              <button
-                type="button"
-                className="tod-btn tod-btn-primary"
-                onClick={confirmAge}
-                autoFocus
-              >
-                I am 18 or older
-              </button>
-              <button
-                type="button"
-                className="tod-btn tod-btn-ghost"
-                onClick={() => setAgeGate(null)}
-              >
-                Not now
-              </button>
+            <div
+              className="tod-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="age-gate-title"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <p className="tod-eyebrow">Before you start</p>
+              <h2 id="age-gate-title" className="tod-modal-title">
+                {ageGate === "drinking-toggle" || ageGate === "drinking-start"
+                  ? "Drinking mode is 18+"
+                  : "NSFW is 18+"}
+              </h2>
+              <p className="tod-body-copy">
+                {ageGate === "drinking-toggle" || ageGate === "drinking-start"
+                  ? "Drinking mode includes drink forfeits and drinking dares. Only continue if everyone playing is 18 or over."
+                  : "This pack contains adult themes. Only continue if everyone playing is 18 or over."}
+              </p>
+              <div className="tod-modal-actions">
+                <button
+                  type="button"
+                  className="tod-btn tod-btn-primary"
+                  onClick={confirmAge}
+                  autoFocus
+                >
+                  I am 18 or older
+                </button>
+                <button
+                  type="button"
+                  className="tod-btn tod-btn-ghost"
+                  onClick={() => setAgeGate(null)}
+                >
+                  Not now
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </section>
   );
 }

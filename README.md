@@ -32,9 +32,10 @@ Truth or Dare is a 2–12 player pass-the-phone game with three content packs:
 Any combination of packs can be selected. The game merges them into one pool
 and shows the source pack on every prompt. Each pack ships 60 truths and 60
 dares; prompts do not repeat until the merged pool is exhausted. There is no
-scoring or timer, and every prompt can be swapped or skipped with no penalty.
-The last player list and pack selection are remembered, but NSFW is
-re-confirmed on each new setup.
+scoring or timer, and every prompt can be swapped or skipped. Optional Drinking
+mode adds drink-involving dares and a per-prompt forfeit amount; in
+Drinking mode there is no Swap prompt. The last setup is remembered, but
+NSFW/Drinking 18+ confirmation is required on each new setup.
 
 ## Structure
 
@@ -91,5 +92,6 @@ and survive a refresh inside a game.
 
 The display names and built-in Forehead Charades decks are original. The quiz
 game's question corpus is separate data, unchanged by the branding pass. Truth
-or Dare ships 360 original prompts across PG, Spicy and NSFW packs; the packs
-can be combined and the NSFW pack is age-gated on each new setup session.
+or Dare ships 360 original prompts across PG, Spicy and NSFW packs, plus
+optional drinking prompts in Drinking mode; the packs can be combined and
+NSFW/Drinking 18+ access is gated on each new setup session.

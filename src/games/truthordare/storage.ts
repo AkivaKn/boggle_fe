@@ -22,6 +22,7 @@ export const defaultSetup = (): SetupConfig => ({
   playerNames: [],
   levels: ["pg"],
   shuffleOrder: true,
+  drinkingMode: false,
 });
 
 export const loadSetup = (): SetupConfig => {
@@ -44,6 +45,7 @@ export const loadSetup = (): SetupConfig => {
       playerNames,
       levels: levels.length > 0 ? levels : fallback.levels,
       shuffleOrder: parsed.shuffleOrder !== false,
+      drinkingMode: parsed.drinkingMode === true,
     };
   } catch {
     return fallback;

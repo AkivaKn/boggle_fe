@@ -4,6 +4,7 @@ import {
   createGame,
   drawPrompt,
   finishGame,
+  forfeitPrompt,
   nextTurn,
   restartGame,
 } from "./game";
@@ -70,6 +71,12 @@ export default function TruthOrDareApp({
     );
   }, []);
 
+  const handleForfeit = useCallback(() => {
+    setGame((current) =>
+      current && current.stage === "prompt" ? forfeitPrompt(current) : current,
+    );
+  }, []);
+
   const handleFinish = useCallback(() => {
     setGame((current) => (current ? finishGame(current) : current));
   }, []);
@@ -125,6 +132,7 @@ export default function TruthOrDareApp({
             onDraw={handleDraw}
             onSwap={handleSwap}
             onDone={handleDone}
+            onForfeit={handleForfeit}
             onFinish={handleFinish}
             onPlayAgain={handlePlayAgain}
             onChangeSetup={() => leaveGame(SETUP_PATH)}

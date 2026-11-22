@@ -7,6 +7,8 @@ export type Prompt = {
   level: TodLevel;
   kind: TodKind;
   text: string;
+  forfeit: number;
+  drinking?: true;
 };
 
 export type Player = {
@@ -18,6 +20,7 @@ export type SetupConfig = {
   playerNames: string[];
   levels: TodLevel[];
   shuffleOrder: boolean;
+  drinkingMode: boolean;
 };
 
 export type GameStage = "choose" | "prompt" | "final";
@@ -32,4 +35,5 @@ export type ActiveGame = {
   used: Record<TodKind, string[]>;
   currentPrompt: Prompt | null;
   stage: GameStage;
+  drinkingMode: boolean;
 };
