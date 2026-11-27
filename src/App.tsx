@@ -3,14 +3,17 @@ import BoggleApp from "./games/BoggleApp";
 import ForeheadCharadesApp from "./games/headsup/App";
 import MillionaireApp from "./games/millionaire/App";
 import MisclueApp from "./games/misclue/App";
+import OutOfLineApp from "./games/outofline/App";
 import TruthOrDareApp from "./games/truthordare/App";
 import {
   isHeadSupPath,
   isMiscluePath,
+  isOutOfLinePath,
   isTruthOrDarePath,
   navigate,
   resolveHeadSupRoute,
   resolveMisclueRoute,
+  resolveOutOfLineRoute,
   resolveRoute,
   resolveTruthOrDareRoute,
   type Route,
@@ -79,12 +82,12 @@ const Lobby = () => (
           accent="rose"
         />
         <GameCard
-          to="/money-ladder"
-          title="The Money Ladder"
-          blurb="Climb fifteen rungs, use your lifelines, and chase the top prize."
-          emoji="💰"
-          tag="Quiz"
-          accent="amber"
+          to="/out-of-line"
+          title="Out of Line"
+          blurb="Play the best fill-in-the-blank card, impress the judge, and win the round."
+          emoji="🃏"
+          tag="Cards"
+          accent="violet"
         />
         <GameCard
           to="/misclue"
@@ -93,6 +96,14 @@ const Lobby = () => (
           emoji="🕵️"
           tag="Social deduction"
           accent="violet"
+        />
+        <GameCard
+          to="/money-ladder"
+          title="The Money Ladder"
+          blurb="Climb fifteen rungs, use your lifelines, and chase the top prize."
+          emoji="💰"
+          tag="Quiz"
+          accent="amber"
         />
         <GameCard
           to="/word-grid"
@@ -125,6 +136,10 @@ export default function App() {
 
   if (isTruthOrDarePath(path)) {
     return <TruthOrDareApp route={resolveTruthOrDareRoute(path)} />;
+  }
+
+  if (isOutOfLinePath(path)) {
+    return <OutOfLineApp route={resolveOutOfLineRoute(path)} />;
   }
 
   if (isMiscluePath(path)) {
