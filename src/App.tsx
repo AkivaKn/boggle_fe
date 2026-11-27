@@ -130,6 +130,10 @@ export default function App() {
     return () => window.removeEventListener("popstate", sync);
   }, [sync]);
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [path]);
+
   if (isHeadSupPath(path)) {
     return <ForeheadCharadesApp route={resolveHeadSupRoute(path)} />;
   }
