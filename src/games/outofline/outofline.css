@@ -1,0 +1,1564 @@
+.ool-theme {
+  --ool-bg: #0d1f1c;
+  --ool-bg-soft: #132925;
+  --ool-panel: rgba(18, 44, 39, 0.92);
+  --ool-panel-strong: #173833;
+  --ool-cream: #f8f1df;
+  --ool-cream-soft: rgba(248, 241, 223, 0.74);
+  --ool-coral: #ff6b5a;
+  --ool-coral-soft: rgba(255, 107, 90, 0.16);
+  --ool-mint: #7ce0c3;
+  --ool-gold: #f7c95c;
+  --ool-line: rgba(248, 241, 223, 0.12);
+  --ool-line-strong: rgba(248, 241, 223, 0.22);
+  --ool-danger: #ff8f84;
+  --ool-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+  min-height: 100vh;
+  background: var(--ool-bg);
+  color: var(--ool-cream);
+  font-family: "Avenir Next", "Trebuchet MS", "Gill Sans", sans-serif;
+}
+
+.ool-theme *,
+.ool-theme *::before,
+.ool-theme *::after {
+  box-sizing: border-box;
+}
+
+.ool-theme button,
+.ool-theme input {
+  font: inherit;
+}
+
+.ool-shell {
+  position: relative;
+  min-height: 100vh;
+  overflow-x: clip;
+}
+
+.ool-bg {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 45% at 50% -10%, rgba(124, 224, 195, 0.13), transparent 60%),
+    radial-gradient(circle at 15% 20%, rgba(255, 107, 90, 0.12), transparent 25%),
+    radial-gradient(circle at 85% 80%, rgba(247, 201, 92, 0.08), transparent 28%),
+    linear-gradient(180deg, #132925 0%, #0d1f1c 45%, #091613 100%);
+  pointer-events: none;
+}
+
+.ool-main {
+  position: relative;
+  width: min(1180px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 1rem 0 3rem;
+}
+
+.ool-main.is-game {
+  padding-bottom: 2rem;
+}
+
+.ool-topnav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.ool-topnav.is-game {
+  margin-bottom: 1rem;
+}
+
+.ool-back-link,
+.ool-text-link,
+.ool-inline-button,
+.ool-alert-close {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ool-cream-soft);
+  cursor: pointer;
+  padding: 0;
+}
+
+.ool-back-link,
+.ool-text-link {
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.ool-back-link:hover,
+.ool-text-link:hover,
+.ool-inline-button:hover,
+.ool-alert-close:hover {
+  color: var(--ool-cream);
+}
+
+.ool-text-link.is-left {
+  justify-self: start;
+  margin-top: 1rem;
+}
+
+.ool-room-code-small,
+.ool-round-pill,
+.ool-wait-tag,
+.ool-ready-tag,
+.ool-pick-badge,
+.ool-adult-tag,
+.ool-mini-tag,
+.ool-deck-locked {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.ool-room-code-small,
+.ool-round-pill {
+  padding: 0.45rem 0.8rem;
+  background: rgba(248, 241, 223, 0.07);
+  border: 1px solid var(--ool-line);
+  color: var(--ool-cream);
+  font-size: 0.78rem;
+}
+
+.ool-kicker {
+  margin: 0 0 0.45rem;
+  color: var(--ool-mint);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.ool-title,
+.ool-lobby-title,
+.ool-game-title {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  color: var(--ool-cream);
+}
+
+.ool-title {
+  font-size: clamp(3.2rem, 10vw, 6.5rem);
+}
+
+.ool-title.is-final {
+  font-size: clamp(2.8rem, 8vw, 5.4rem);
+}
+
+.ool-lobby-title,
+.ool-game-title {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+}
+
+.ool-tagline,
+.ool-lobby-sub,
+.ool-panel-heading p,
+.ool-rules-head p,
+.ool-hint,
+.ool-small,
+.ool-waiting-panel p,
+.ool-reveal-head p,
+.ool-final-actions p {
+  color: var(--ool-cream-soft);
+  line-height: 1.55;
+}
+
+.ool-tagline {
+  max-width: 36rem;
+  margin: 1rem 0 0;
+  font-size: 1.08rem;
+}
+
+.ool-hero {
+  display: grid;
+  gap: 2rem;
+  padding: 1rem 0 2rem;
+  align-items: center;
+}
+
+.ool-hero-notes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1.4rem;
+}
+
+.ool-hero-notes span {
+  padding: 0.5rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--ool-line);
+  background: rgba(248, 241, 223, 0.04);
+  color: var(--ool-cream-soft);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.ool-hero-stack {
+  position: relative;
+  min-height: 15rem;
+}
+
+.ool-hero-card {
+  position: absolute;
+  width: min(100%, 22rem);
+  padding: 1.4rem;
+  border-radius: 1.2rem;
+  box-shadow: var(--ool-shadow);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.ool-hero-card.is-front {
+  right: 0;
+  bottom: 0;
+  background: #14332d;
+  border: 1px solid rgba(124, 224, 195, 0.3);
+  color: var(--ool-cream);
+  font-size: 1.35rem;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.ool-hero-card.is-middle,
+.ool-hero-card.is-back {
+  background: var(--ool-cream);
+  color: #182320;
+}
+
+.ool-hero-card.is-middle {
+  top: 2.2rem;
+  right: 2.5rem;
+  transform: rotate(-5deg);
+}
+
+.ool-hero-card.is-back {
+  top: 0;
+  left: 0;
+  transform: rotate(4deg);
+  opacity: 0.88;
+}
+
+.ool-panel,
+.ool-rejoin-card {
+  background: linear-gradient(180deg, rgba(24, 56, 49, 0.95), rgba(16, 39, 35, 0.92));
+  border: 1px solid var(--ool-line);
+  border-radius: 1.5rem;
+  box-shadow: var(--ool-shadow);
+}
+
+.ool-panel {
+  padding: 1.35rem;
+}
+
+.ool-panel.is-narrow {
+  max-width: 42rem;
+  margin: 0 auto;
+}
+
+.ool-panel-heading h2,
+.ool-panel h2,
+.ool-rejoin-card h2,
+.ool-waiting-panel h2,
+.ool-reveal-head h2 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.5rem, 4vw, 2.2rem);
+  line-height: 1.05;
+}
+
+.ool-panel-heading p:last-child,
+.ool-rejoin-card p {
+  margin-bottom: 0;
+}
+
+.ool-panel-heading.is-row,
+.ool-hand-heading,
+.ool-play-bar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.ool-rejoin-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.35rem;
+  margin-bottom: 1.25rem;
+}
+
+.ool-landing-grid,
+.ool-lobby-grid,
+.ool-join-grid,
+.ool-final-grid,
+.ool-rules-grid {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.ool-form {
+  display: grid;
+  gap: 1.15rem;
+  margin-top: 1.35rem;
+}
+
+.ool-field,
+.ool-fieldset {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.ool-field span,
+.ool-fieldset legend {
+  font-size: 0.84rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  color: var(--ool-cream);
+}
+
+.ool-field input[type="text"],
+.ool-field input:not([type]) {
+  width: 100%;
+}
+
+.ool-field input {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border-radius: 0.95rem;
+  border: 1px solid var(--ool-line-strong);
+  background: rgba(248, 241, 223, 0.06);
+  color: var(--ool-cream);
+}
+
+.ool-field input::placeholder {
+  color: rgba(248, 241, 223, 0.45);
+}
+
+.ool-field input:focus-visible,
+.ool-button:focus-visible,
+.ool-answer-card.is-clickable:focus-visible,
+.ool-submission:focus-visible,
+.ool-deck-option:focus-within,
+.ool-remove-button:focus-visible,
+.ool-back-link:focus-visible,
+.ool-text-link:focus-visible {
+  outline: 3px solid rgba(124, 224, 195, 0.45);
+  outline-offset: 2px;
+}
+
+.ool-deck-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.ool-deck-option {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.8rem;
+  padding: 0.9rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid var(--ool-line);
+  background: rgba(248, 241, 223, 0.03);
+  cursor: pointer;
+}
+
+.ool-deck-option.is-checked {
+  border-color: rgba(124, 224, 195, 0.35);
+  background: rgba(124, 224, 195, 0.07);
+}
+
+.ool-deck-option.is-locked {
+  cursor: default;
+}
+
+.ool-deck-option input {
+  margin-top: 0.2rem;
+  accent-color: var(--ool-mint);
+}
+
+.ool-deck-info,
+.ool-deck-title,
+.ool-deck-description,
+.ool-deck-count {
+  display: block;
+}
+
+.ool-deck-title {
+  font-weight: 800;
+  color: var(--ool-cream);
+}
+
+.ool-deck-description {
+  margin-top: 0.2rem;
+  color: var(--ool-cream-soft);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.ool-deck-count {
+  margin-top: 0.2rem;
+  color: rgba(248, 241, 223, 0.58);
+  font-size: 0.78rem;
+}
+
+.ool-deck-locked {
+  margin-left: 0.45rem;
+  padding: 0.15rem 0.45rem;
+  background: rgba(248, 241, 223, 0.08);
+  color: var(--ool-cream-soft);
+  font-size: 0.64rem;
+}
+
+.ool-adult-tag {
+  margin-left: 0.45rem;
+  padding: 0.15rem 0.45rem;
+  background: rgba(255, 107, 90, 0.16);
+  color: #ffb3aa;
+  font-size: 0.64rem;
+}
+
+.ool-segmented {
+  display: inline-grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.ool-segmented button {
+  appearance: none;
+  padding: 0.75rem 1rem;
+  border-radius: 0.85rem;
+  border: 1px solid var(--ool-line);
+  background: rgba(248, 241, 223, 0.04);
+  color: var(--ool-cream);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.ool-segmented button.is-active {
+  background: var(--ool-cream);
+  color: #162421;
+  border-color: var(--ool-cream);
+}
+
+.ool-age-check {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.75rem;
+  padding: 0.95rem 1rem;
+  border-radius: 1rem;
+  background: rgba(255, 107, 90, 0.1);
+  border: 1px solid rgba(255, 107, 90, 0.2);
+  color: var(--ool-cream-soft);
+  line-height: 1.5;
+}
+
+.ool-age-check input {
+  margin-top: 0.25rem;
+  accent-color: var(--ool-coral);
+}
+
+.ool-age-check strong {
+  color: var(--ool-cream);
+}
+
+.ool-button {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.85rem 1.25rem;
+  font-size: 0.92rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 140ms ease, background-color 140ms ease, border-color 140ms ease, opacity 140ms ease;
+}
+
+.ool-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.ool-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ool-button.is-primary {
+  background: var(--ool-coral);
+  color: #1a1412;
+}
+
+.ool-button.is-secondary {
+  background: rgba(248, 241, 223, 0.08);
+  border-color: var(--ool-line-strong);
+  color: var(--ool-cream);
+}
+
+.ool-button.is-ghost {
+  background: transparent;
+  border-color: var(--ool-line-strong);
+  color: var(--ool-cream);
+}
+
+.ool-button.is-danger {
+  background: rgba(255, 107, 90, 0.12);
+  border-color: rgba(255, 107, 90, 0.35);
+  color: #ffb3aa;
+}
+
+.ool-button.is-wide {
+  width: 100%;
+}
+
+.ool-button.is-small {
+  padding: 0.65rem 1rem;
+  font-size: 0.82rem;
+}
+
+.ool-button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.ool-hint {
+  margin: -0.2rem 0 0;
+  font-size: 0.86rem;
+}
+
+.ool-hint.is-warn {
+  color: #ffd3cd;
+}
+
+.ool-alert {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: 1rem;
+  background: rgba(255, 107, 90, 0.14);
+  border: 1px solid rgba(255, 107, 90, 0.28);
+  color: #ffe4e0;
+  margin-bottom: 1rem;
+}
+
+.ool-alert-close {
+  font-size: 0.78rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.ool-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: var(--ool-cream-soft);
+  font-weight: 700;
+}
+
+.ool-spinner {
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 50%;
+  border: 2px solid rgba(248, 241, 223, 0.18);
+  border-top-color: var(--ool-mint);
+  animation: ool-spin 800ms linear infinite;
+}
+
+.ool-spinner.is-small {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+@keyframes ool-spin {
+  to { transform: rotate(360deg); }
+}
+
+.ool-join-note {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.7rem;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--ool-line);
+  color: var(--ool-cream-soft);
+}
+
+.ool-note-dot,
+.ool-pulse-dot {
+  width: 0.65rem;
+  height: 0.65rem;
+  margin-top: 0.35rem;
+  border-radius: 50%;
+  background: var(--ool-mint);
+  box-shadow: 0 0 0 4px rgba(124, 224, 195, 0.12);
+}
+
+.ool-pulse-dot {
+  animation: ool-pulse 1.8s ease-out infinite;
+}
+
+@keyframes ool-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(124, 224, 195, 0.28); }
+  70% { box-shadow: 0 0 0 8px rgba(124, 224, 195, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(124, 224, 195, 0); }
+}
+
+.ool-lobby-head,
+.ool-game-head,
+.ool-join-head,
+.ool-rules-head,
+.ool-final-head {
+  margin-bottom: 1.25rem;
+}
+
+.ool-lobby-head {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+  border-radius: 1.5rem;
+  background: linear-gradient(180deg, rgba(24, 56, 49, 0.92), rgba(16, 39, 35, 0.88));
+  border: 1px solid var(--ool-line);
+  box-shadow: var(--ool-shadow);
+}
+
+.ool-lobby-code {
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: clamp(2rem, 9vw, 4.2rem);
+  line-height: 1;
+  letter-spacing: 0.03em;
+  color: var(--ool-cream);
+  word-break: break-word;
+}
+
+.ool-lobby-sub {
+  margin: 0.65rem 0 0;
+}
+
+.ool-share-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.ool-lobby-share-card {
+  display: grid;
+  justify-items: center;
+  gap: 0.55rem;
+  padding: 1rem;
+  border-radius: 1.25rem;
+  background: rgba(248, 241, 223, 0.04);
+  border: 1px solid rgba(248, 241, 223, 0.08);
+}
+
+.ool-qr-wrap {
+  width: min(100%, 10.5rem);
+  padding: 0.7rem;
+  border-radius: 1rem;
+  background: #f8f1df;
+}
+
+.ool-share-hint {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--ool-cream);
+  text-align: center;
+}
+
+.ool-share-url {
+  margin: 0;
+  color: rgba(248, 241, 223, 0.58);
+  font-size: 0.76rem;
+  word-break: break-all;
+  text-align: center;
+}
+
+.ool-room-code-small.is-button {
+  cursor: pointer;
+}
+
+.ool-room-code-small.is-button:hover {
+  border-color: rgba(124, 224, 195, 0.35);
+  color: var(--ool-mint);
+}
+
+.ool-game-share {
+  display: grid;
+  gap: 1rem;
+  margin: 0 0 1rem;
+  padding: 1rem;
+  border-radius: 1.25rem;
+  background: rgba(18, 44, 39, 0.88);
+  border: 1px solid var(--ool-line);
+}
+
+.ool-qr-wrap.is-small {
+  width: min(100%, 8.5rem);
+}
+
+.ool-game-share-code {
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: clamp(1.5rem, 7vw, 2.4rem);
+  line-height: 1;
+  color: var(--ool-cream);
+}
+
+.ool-game-share-copy .ool-share-hint {
+  text-align: left;
+  margin: 0.45rem 0 0;
+  font-size: 0.8rem;
+  color: var(--ool-cream-soft);
+}
+
+.ool-game-share-copy .ool-share-actions {
+  margin-top: 0.85rem;
+}
+
+.ool-player-list {
+  list-style: none;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.ool-player-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 1rem;
+  background: rgba(248, 241, 223, 0.04);
+  border: 1px solid rgba(248, 241, 223, 0.06);
+}
+
+.ool-player-row.is-self {
+  border-color: rgba(124, 224, 195, 0.28);
+  background: rgba(124, 224, 195, 0.08);
+}
+
+.ool-seat-number {
+  width: 1.8rem;
+  height: 1.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(248, 241, 223, 0.08);
+  color: var(--ool-cream-soft);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.ool-player-name,
+.ool-standing-name,
+.ool-entry-author,
+.ool-score-name {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 700;
+}
+
+.ool-mini-tag {
+  padding: 0.12rem 0.42rem;
+  background: rgba(248, 241, 223, 0.1);
+  color: var(--ool-cream-soft);
+  font-size: 0.62rem;
+}
+
+.ool-mini-tag.is-you,
+.ool-mini-tag.is-judge,
+.ool-mini-tag.is-win {
+  background: rgba(124, 224, 195, 0.14);
+  color: var(--ool-mint);
+}
+
+.ool-remove-button {
+  appearance: none;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 107, 90, 0.28);
+  background: transparent;
+  color: #ffb3aa;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ool-remove-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ool-lobby-decks,
+.ool-final-decks {
+  margin-top: 1.35rem;
+}
+
+.ool-deck-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 0.55rem;
+}
+
+.ool-deck-chip {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(248, 241, 223, 0.07);
+  border: 1px solid var(--ool-line);
+  color: var(--ool-cream-soft);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.ool-deck-chip.is-adult {
+  border-color: rgba(255, 107, 90, 0.24);
+}
+
+.ool-deck-chip .ool-adult-tag {
+  margin-left: 0;
+}
+
+.ool-wait-tag,
+.ool-ready-tag {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.68rem;
+}
+
+.ool-wait-tag {
+  background: rgba(247, 201, 92, 0.12);
+  color: var(--ool-gold);
+}
+
+.ool-ready-tag {
+  background: rgba(124, 224, 195, 0.12);
+  color: var(--ool-mint);
+}
+
+.ool-lobby-actions {
+  margin-top: 1.5rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.ool-waiting-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.95rem 1rem;
+  border-radius: 1rem;
+  background: rgba(248, 241, 223, 0.04);
+  color: var(--ool-cream-soft);
+  font-weight: 700;
+}
+
+.ool-bullets,
+.ool-numbered {
+  margin: 1rem 0 0;
+  padding-left: 1.25rem;
+  color: var(--ool-cream-soft);
+  line-height: 1.65;
+}
+
+.ool-bullets li + li,
+.ool-numbered li + li {
+  margin-top: 0.55rem;
+}
+
+.ool-age-note {
+  margin-top: 1.25rem;
+  padding: 0.9rem 1rem;
+  border-radius: 1rem;
+  background: rgba(255, 107, 90, 0.08);
+  color: var(--ool-cream-soft);
+  line-height: 1.55;
+}
+
+.ool-age-note .ool-adult-tag {
+  margin-left: 0;
+  margin-right: 0.35rem;
+}
+
+.ool-game-head {
+  display: grid;
+  gap: 1rem;
+}
+
+.ool-scoreboard {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.ool-score-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(248, 241, 223, 0.05);
+  border: 1px solid var(--ool-line);
+  color: var(--ool-cream-soft);
+}
+
+.ool-score-chip.is-self {
+  border-color: rgba(124, 224, 195, 0.28);
+}
+
+.ool-score-chip.is-judge {
+  background: rgba(247, 201, 92, 0.08);
+}
+
+.ool-score-name {
+  font-size: 0.82rem;
+}
+
+.ool-score-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: rgba(248, 241, 223, 0.1);
+  color: var(--ool-cream);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.ool-prompt-card {
+  padding: 1.4rem;
+  border-radius: 1.5rem;
+  background: linear-gradient(160deg, #1b433a 0%, #132f29 100%);
+  border: 1px solid rgba(124, 224, 195, 0.18);
+  box-shadow: var(--ool-shadow);
+}
+
+.ool-prompt-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  color: var(--ool-cream-soft);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ool-pick-badge {
+  padding: 0.28rem 0.6rem;
+  background: rgba(247, 201, 92, 0.16);
+  color: var(--ool-gold);
+  font-size: 0.66rem;
+}
+
+.ool-prompt-text {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.7rem, 4.4vw, 3rem);
+  line-height: 1.25;
+  color: var(--ool-cream);
+  text-wrap: pretty;
+}
+
+.ool-blank {
+  display: inline-block;
+  min-width: 3.2em;
+  margin: 0 0.1em;
+  border-bottom: 0.08em solid rgba(255, 107, 90, 0.72);
+  transform: translateY(-0.08em);
+}
+
+.ool-table {
+  margin-top: 1.25rem;
+}
+
+.ool-hand-board,
+.ool-judging-board,
+.ool-reveal-board,
+.ool-waiting-panel {
+  padding: 1.25rem;
+  border-radius: 1.5rem;
+  background: rgba(10, 24, 21, 0.3);
+  border: 1px solid var(--ool-line);
+}
+
+.ool-hand-heading h2,
+.ool-judging-board h2,
+.ool-reveal-board h2 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.5rem, 4vw, 2.2rem);
+  line-height: 1.1;
+}
+
+.ool-selected-count,
+.ool-progress-label,
+.ool-waiting-note {
+  color: var(--ool-cream-soft);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.ool-hand-scroll {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(14rem, 78vw);
+  gap: 0.85rem;
+  margin-top: 1.25rem;
+  overflow-x: auto;
+  padding: 0.2rem 0 0.5rem;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ool-hand-scroll.is-preview {
+  grid-auto-columns: minmax(11rem, 14rem);
+  opacity: 0.88;
+}
+
+.ool-answer-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  min-height: 11rem;
+  padding: 1.1rem;
+  border-radius: 1.15rem;
+  border: 1px solid rgba(24, 36, 32, 0.08);
+  background: var(--ool-cream);
+  color: #182320;
+  text-align: left;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+  scroll-snap-align: start;
+}
+
+.ool-answer-card.is-clickable {
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+}
+
+.ool-answer-card.is-clickable:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.ool-answer-card.is-selected {
+  border-color: rgba(255, 107, 90, 0.75);
+  box-shadow: 0 0 0 3px rgba(255, 107, 90, 0.18), 0 16px 30px rgba(0, 0, 0, 0.18);
+}
+
+.ool-answer-card.is-winner {
+  background: #fff7ea;
+  border-color: rgba(247, 201, 92, 0.55);
+}
+
+.ool-answer-card.is-preview {
+  min-height: 8.5rem;
+  box-shadow: none;
+}
+
+.ool-answer-text,
+.ool-submission-card,
+.ool-entry-cards span {
+  font-size: 1.02rem;
+  line-height: 1.45;
+  font-weight: 700;
+  text-wrap: pretty;
+}
+
+.ool-card-kicker {
+  display: inline-flex;
+  margin-bottom: 0.7rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(247, 201, 92, 0.2);
+  color: #8b6508;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ool-order-badge {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.85rem;
+  width: 1.7rem;
+  height: 1.7rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--ool-coral);
+  color: #1a1412;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.ool-play-bar {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--ool-line);
+  align-items: center;
+}
+
+.ool-play-bar p {
+  margin: 0;
+  color: var(--ool-cream-soft);
+}
+
+.ool-waiting-wrap {
+  display: grid;
+  gap: 1rem;
+}
+
+.ool-waiting-panel {
+  text-align: center;
+  padding: 2rem 1.25rem;
+}
+
+.ool-waiting-panel .ool-pulse-dot {
+  display: inline-block;
+  margin: 0 auto 1rem;
+}
+
+.ool-waiting-panel p {
+  max-width: 32rem;
+  margin: 0.75rem auto 0;
+}
+
+.ool-progress {
+  width: min(100%, 22rem);
+  height: 0.45rem;
+  margin: 1.25rem auto 0.6rem;
+  border-radius: 999px;
+  background: rgba(248, 241, 223, 0.1);
+  overflow: hidden;
+}
+
+.ool-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--ool-mint), var(--ool-gold));
+}
+
+.ool-judge-grid {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 1.25rem;
+}
+
+.ool-submission {
+  appearance: none;
+  width: 100%;
+  padding: 1rem;
+  border-radius: 1.2rem;
+  border: 1px solid rgba(248, 241, 223, 0.12);
+  background: rgba(248, 241, 223, 0.04);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ool-submission.is-selected {
+  border-color: rgba(255, 107, 90, 0.55);
+  background: rgba(255, 107, 90, 0.08);
+}
+
+.ool-submission-cards {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.ool-submission-card {
+  display: block;
+  padding: 1rem;
+  border-radius: 1rem;
+  background: var(--ool-cream);
+  color: #182320;
+}
+
+.ool-submission-label {
+  display: block;
+  margin-top: 0.75rem;
+  color: var(--ool-cream-soft);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ool-reveal-head {
+  margin-bottom: 1.25rem;
+}
+
+.ool-winner-cards {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  margin-bottom: 1.5rem;
+}
+
+.ool-winner-cards .ool-answer-card {
+  min-height: 10rem;
+}
+
+.ool-entry-list {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 0.7rem;
+}
+
+.ool-entry {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.95rem 1rem;
+  border-radius: 1rem;
+  background: rgba(248, 241, 223, 0.04);
+  border: 1px solid rgba(248, 241, 223, 0.06);
+}
+
+.ool-entry.is-winner {
+  border-color: rgba(247, 201, 92, 0.34);
+  background: rgba(247, 201, 92, 0.08);
+}
+
+.ool-entry-cards {
+  display: grid;
+  gap: 0.25rem;
+  color: var(--ool-cream-soft);
+}
+
+.ool-host-controls {
+  margin-top: 1rem;
+  padding: 0.95rem 1rem;
+  border-radius: 1rem;
+  border: 1px dashed rgba(248, 241, 223, 0.22);
+  color: var(--ool-cream-soft);
+}
+
+.ool-host-controls summary {
+  cursor: pointer;
+  font-weight: 800;
+  color: var(--ool-cream);
+}
+
+.ool-host-controls p {
+  margin: 0.75rem 0 1rem;
+  line-height: 1.55;
+}
+
+.ool-final-head {
+  margin-bottom: 1.5rem;
+}
+
+.ool-standings {
+  list-style: none;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.ool-standing {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.95rem 1rem;
+  border-radius: 1rem;
+  background: rgba(248, 241, 223, 0.04);
+  border: 1px solid rgba(248, 241, 223, 0.06);
+}
+
+.ool-standing.is-first {
+  border-color: rgba(247, 201, 92, 0.34);
+  background: rgba(247, 201, 92, 0.08);
+}
+
+.ool-standing.is-self {
+  box-shadow: inset 0 0 0 1px rgba(124, 224, 195, 0.28);
+}
+
+.ool-rank {
+  width: 1.9rem;
+  height: 1.9rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(248, 241, 223, 0.09);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.ool-standing-score {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.ool-rules-head p,
+.ool-join-head p {
+  max-width: 42rem;
+}
+
+.ool-rules-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.ool-conn-stack {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  width: min(24rem, calc(100vw - 2rem));
+  z-index: 40;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.ool-connection-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.8rem 1rem;
+  border-radius: 1rem;
+  background: rgba(19, 41, 37, 0.96);
+  border: 1px solid var(--ool-line-strong);
+  color: var(--ool-cream);
+  box-shadow: var(--ool-shadow);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.ool-connection-banner.is-working {
+  justify-content: flex-start;
+}
+
+.ool-inline-button {
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.ool-empty {
+  padding: 2rem;
+  text-align: center;
+  color: var(--ool-cream-soft);
+}
+
+@media (min-width: 760px) {
+  .ool-main {
+    width: min(1180px, calc(100% - 3rem));
+    padding-top: 1.5rem;
+  }
+
+  .ool-hero {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 24rem);
+    padding-bottom: 2.5rem;
+  }
+
+  .ool-landing-grid,
+  .ool-lobby-grid,
+  .ool-join-grid,
+  .ool-final-grid {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  }
+
+  .ool-lobby-head {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .ool-lobby-share-card {
+    min-width: 12rem;
+  }
+
+  .ool-game-share {
+    grid-template-columns: auto 1fr;
+    align-items: center;
+  }
+
+  .ool-rules-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ool-game-head {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+  }
+
+  .ool-hand-scroll {
+    grid-auto-flow: row;
+    grid-auto-columns: unset;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    overflow: visible;
+    padding-bottom: 0;
+  }
+
+  .ool-hand-scroll.is-preview {
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  }
+
+  .ool-judge-grid {
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  }
+}
+
+@media (max-width: 759px) {
+  .ool-main {
+    width: min(1180px, calc(100% - 1.25rem));
+    padding-top: 0.75rem;
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom));
+  }
+
+  .ool-main.is-game {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  }
+
+  .ool-topnav {
+    margin-bottom: 0.85rem;
+  }
+
+  .ool-game-head {
+    gap: 0.75rem;
+    margin-bottom: 0.9rem;
+  }
+
+  .ool-game-title {
+    font-size: clamp(1.7rem, 7vw, 2.4rem);
+  }
+
+  .ool-scoreboard {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.2rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .ool-scoreboard::-webkit-scrollbar {
+    display: none;
+  }
+
+  .ool-score-chip {
+    flex: 0 0 auto;
+  }
+
+  .ool-prompt-card {
+    padding: 1rem;
+    border-radius: 1.2rem;
+  }
+
+  .ool-prompt-meta {
+    margin-bottom: 0.7rem;
+    font-size: 0.72rem;
+  }
+
+  .ool-prompt-text {
+    font-size: clamp(1.35rem, 6vw, 2rem);
+  }
+
+  .ool-hand-board,
+  .ool-judging-board,
+  .ool-reveal-board,
+  .ool-waiting-panel {
+    padding: 1rem;
+    border-radius: 1.2rem;
+  }
+
+  .ool-hand-board,
+  .ool-judging-board,
+  .ool-reveal-board {
+    padding-bottom: 5.25rem;
+  }
+
+  .ool-answer-card {
+    min-height: 9.5rem;
+    padding: 0.95rem;
+  }
+
+  .ool-hand-scroll {
+    grid-auto-columns: minmax(13rem, 82vw);
+    gap: 0.7rem;
+    margin-top: 1rem;
+  }
+
+  .ool-rejoin-card,
+  .ool-panel-heading.is-row,
+  .ool-hand-heading,
+  .ool-play-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ool-share-actions .ool-button,
+  .ool-play-bar .ool-button {
+    width: 100%;
+  }
+
+  .ool-share-actions {
+    flex-direction: column;
+  }
+
+  .ool-play-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    margin: 1rem -1rem -1rem;
+    padding: 0.9rem 1rem calc(0.9rem + env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, rgba(10, 24, 21, 0), rgba(10, 24, 21, 0.94) 22%, rgba(10, 24, 21, 0.98));
+    border-top: 0;
+    backdrop-filter: blur(8px);
+  }
+
+  .ool-waiting-panel {
+    padding: 1.5rem 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ool-spinner,
+  .ool-pulse-dot,
+  .ool-button,
+  .ool-answer-card.is-clickable {
+    animation: none;
+    transition: none;
+  }
+}
