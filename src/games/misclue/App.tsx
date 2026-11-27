@@ -284,7 +284,7 @@ function Setup({ onStart, onHowTo, initial }: { onStart: (cfg: SetupConfig) => v
       if (initial.mode === "party") return initial.humans.map(h => h.name);
       return [initial.humans[0]?.name || "You"];
     }
-    return ["You", "Player 2", "Player 3"];
+    return ["Player 1", "Player 2", "Player 3"];
   });
   const [aiCount, setAiCount] = useState(initial?.mode === "solo" ? initial.aiCount : 3);
   const [scoreTarget, setScoreTarget] = useState(initial?.scoreTarget ?? 3);
