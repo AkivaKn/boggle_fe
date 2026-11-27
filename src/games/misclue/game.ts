@@ -214,6 +214,17 @@ export function submitClue(state: GameState, seat: number, text: string): GameSt
   return { ...state, clues, turnIndex, phase, voteIndex, message: null };
 }
 
+export function finishClueRound(state: GameState): GameState {
+  if (state.phase !== "clue") return state;
+  return {
+    ...state,
+    phase: state.mode === "party" ? "discussion" : "vote",
+    turnIndex: 0,
+    voteIndex: 0,
+    message: null,
+  };
+}
+
 export function startVote(state: GameState): GameState {
   return { ...state, phase: "vote", turnIndex: 0, voteIndex: 0, revoteCount: 0, voteResult: null, votes: state.votes.filter(v => v.round !== state.round), message: null };
 }

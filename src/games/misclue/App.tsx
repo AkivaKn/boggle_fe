@@ -11,6 +11,7 @@ import {
   createGame,
   currentTurnPlayer,
   defaultRoles,
+  finishClueRound,
   nextRound,
   roleLabel,
   selectElimination,
@@ -550,6 +551,49 @@ function ClueScreen({ state, setState, aiBusy }: { state: GameState; setState: D
     setText("");
   };
 
+  if (state.mode === "party") {
+    return (
+      <div className="ms-board">
+        <div className="ms-card ms-card-strong">
+          <div className="ms-game-head">
+            <div>
+              <p className="ms-kicker" style={{marginBottom:4}}>Clue round</p>
+              <h2 className="ms-section-title">Give clues in order</h2>
+            </div>
+          </div>
+          <p className="ms-muted" style={{marginBottom:16}}>Everyone is in the room. Give your clues out loud in this order, then continue to discussion.</p>
+          <div style={{display:"grid",gap:8,marginBottom:16}}>
+            {alive.map((p, i) => (
+              <div key={p.seat} className="ms-reveal-item">
+                <div className="ms-row" style={{gap:10}}>
+                  <span className="ms-role-badge" style={{background:"rgba(245,185,66,.16)",color:"var(--ms-yellow)",minWidth:32,justifyContent:"center"}}>{i + 1}</span>
+                  <strong>{p.name}</strong>
+                </div>
+                <span className="ms-muted" style={{fontSize:".85rem"}}>Say clue out loud</span>
+              </div>
+            ))}
+          </div>
+          <div className="ms-actions">
+            <button className="ms-btn ms-btn-primary" onClick={()=>setState(prev=>prev?finishClueRound(prev):prev)}>All clues given</button>
+          </div>
+          {state.message && <p style={{marginTop:12,color:"var(--ms-yellow)",fontWeight:700}}>{state.message}</p>}
+        </div>
+
+        <div className="ms-card">
+          <YourSecret state={state} />
+          <h3 style={{marginBottom:12}}>Players</h3>
+          <div style={{display:"grid",gap:8}}>
+            {state.players.map(p => (
+              <div key={p.seat} className={cx("ms-reveal-item", !p.alive && "is-out")}>
+                <strong>{p.name}</strong> {!p.alive ? <span style={{color:"var(--ms-dim)"}}>(out)</span> : ""}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="ms-board">
       <div className="ms-card ms-card-strong">
@@ -561,20 +605,14 @@ function ClueScreen({ state, setState, aiBusy }: { state: GameState; setState: D
         </div>
         <div className="ms-turn-banner">
           <h3>{player.isAI ? `${player.emoji || "🤖"} ${player.name} is thinking...` : `🎤 ${player.name}'s turn`}</h3>
-          <p>{player.isAI ? "The AI character is coming up with a clue." : state.mode === "party" ? "Say your clue out loud, then tap next." : "Type a short clue. Don’t say your secret word."}</p>
+          <p>{player.isAI ? "The AI character is coming up with a clue." : "Type a short clue. Don’t say your secret word."}</p>
           {player.isAI && aiBusy && <div className="ms-thinking" style={{marginTop:10}}><span className="ms-dot"/><span className="ms-dot"/><span className="ms-dot"/> Thinking</div>}
         </div>
 
-        {!player.isAI && state.mode === "solo" && (
+        {!player.isAI && (
           <div className="ms-input-row">
             <input className="ms-input" value={text} maxLength={32} placeholder="Type a short clue..." onChange={e=>setText(e.target.value)} onKeyDown={e=>{if(e.key==="Enter") submit();}} />
             <button className="ms-btn ms-btn-primary" onClick={submit} disabled={!text.trim()}>Send clue</button>
-          </div>
-        )}
-
-        {!player.isAI && state.mode === "party" && (
-          <div className="ms-actions">
-            <button className="ms-btn ms-btn-primary" onClick={()=>setState(prev=>prev?submitClue(prev, player.seat, "(spoken clue)"):prev)}>Clue given - next</button>
           </div>
         )}
 
@@ -892,7 +930,9 @@ function RoundResultScreen({ state, setState }: { state: GameState; setState: Di
                   <strong>{p.emoji ? p.emoji+" " : ""}{p.name}</strong> {!p.alive ? <span style={{color:"var(--ms-dim)"}}>(out)</span> : ""}
                   {clues && <div style={{fontSize:".78rem",color:"var(--ms-muted)",marginTop:2}}>{clues}</div>}
                 </div>
-                <span className={cx("ms-role-badge", roleBadge(p.role))}>{roleLabel(p.role)}</span>
+                {!p.alive
+                  ? <span className={cx("ms-role-badge", roleBadge(p.role))}>{roleLabel(p.role)}</span>
+                  : <span className="ms-role-badge" style={{background:"rgba(255,255,255,.08)",color:"var(--ms-muted)"}}>In play</span>}
               </div>
             );
           })}
