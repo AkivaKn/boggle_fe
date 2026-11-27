@@ -2,12 +2,15 @@ import { useCallback, useEffect, useState } from "react";
 import BoggleApp from "./games/BoggleApp";
 import ForeheadCharadesApp from "./games/headsup/App";
 import MillionaireApp from "./games/millionaire/App";
+import MisclueApp from "./games/misclue/App";
 import TruthOrDareApp from "./games/truthordare/App";
 import {
   isHeadSupPath,
+  isMiscluePath,
   isTruthOrDarePath,
   navigate,
   resolveHeadSupRoute,
+  resolveMisclueRoute,
   resolveRoute,
   resolveTruthOrDareRoute,
   type Route,
@@ -19,7 +22,7 @@ type GameCardProps = {
   blurb: string;
   emoji: string;
   tag: string;
-  accent: "teal" | "amber" | "indigo" | "rose";
+  accent: "teal" | "amber" | "indigo" | "rose" | "violet";
 };
 
 const GameCard = ({ to, title, blurb, emoji, tag, accent }: GameCardProps) => (
@@ -84,6 +87,14 @@ const Lobby = () => (
           accent="amber"
         />
         <GameCard
+          to="/misclue"
+          title="Misclue"
+          blurb="Spot the Tourist, catch the Drifter, and bluff your way through secret words."
+          emoji="🕵️"
+          tag="Social deduction"
+          accent="violet"
+        />
+        <GameCard
           to="/word-grid"
           title="Word Grid"
           blurb="Find as many words as you can before the three minutes run out."
@@ -114,6 +125,10 @@ export default function App() {
 
   if (isTruthOrDarePath(path)) {
     return <TruthOrDareApp route={resolveTruthOrDareRoute(path)} />;
+  }
+
+  if (isMiscluePath(path)) {
+    return <MisclueApp route={resolveMisclueRoute(path)} />;
   }
 
   const route: Route = resolveRoute(path);

@@ -1,4 +1,4 @@
-# Games FE — Forehead Charades, Truth or Dare, Word Grid & The Money Ladder
+# Games FE — Forehead Charades, Truth or Dare, Misclue, Word Grid & The Money Ladder
 
 One React SPA serving **every game** from one endpoint. Built with React,
 TypeScript, Vite and Tailwind CSS.
@@ -10,6 +10,7 @@ TypeScript, Vite and Tailwind CSS.
 | `/` | The lobby — pick a game |
 | `/forehead-charades` | Forehead Charades (client-only pass-the-phone) |
 | `/truth-or-dare` | Truth or Dare (client-only pass-the-phone) |
+| `/misclue` | Misclue (social deduction, party pass-the-phone or solo vs AI) |
 | `/money-ladder` | The Money Ladder |
 | `/word-grid` | Word Grid |
 
@@ -37,6 +38,15 @@ mode adds drink-involving dares and a per-prompt forfeit amount; in
 Drinking mode there is no Swap prompt. The last setup is remembered, but
 NSFW/Drinking 18+ confirmation is required on each new setup.
 
+## Misclue
+
+Misclue is a secret-word social deduction game with two modes:
+
+- **Party Mode** — pass-the-phone, humans only, verbal clues and discussion.
+- **Solo Mode** — 1 human vs randomly picked AI characters; the human types clues and votes, AI turns are resolved through the backend.
+
+Roles are **Natives** (same word), **Tourists** (similar word), and **Drifter** (no word, gets one guess if eliminated). Party Mode is fully client-side; Solo Mode calls `POST /api/misclue/ai/turn`.
+
 ## Structure
 
 ```
@@ -48,25 +58,28 @@ src/games/components_boggle/     Word Grid's components
 src/games/millionaire/           The Money Ladder (app, api client, components)
 src/games/headsup/               Forehead Charades (client-only; no API calls)
 src/games/truthordare/           Truth or Dare (client-only; no API calls)
+src/games/misclue/               Misclue (local party mode + solo AI mode)
 src/index.css                    the shared design system (Stage palette + tokens)
 ```
 
 Each game keeps its own state namespace (Word Grid persists its room under
 `roomId`/`roomCode`, The Money Ladder under its own keys, Forehead Charades
-under `foreheadCharades.*`, Truth or Dare under `truthOrDare.*`), so they can
-never collide in one browser.
+under `foreheadCharades.*`, Truth or Dare under `truthOrDare.*`, Misclue under
+`misclue.state.v1`), so they can never collide in one browser.
 
 ## Backend
 
-The two server-backed games talk to the **one** API in the sibling `boggle`
+The server-backed games talk to the **one** API in the sibling `boggle`
 repo, on their own route trees:
 
 - Word Grid → `/api/boggle/*`, `/ws/boggle/*`
 - The Money Ladder → `/api/millionaire/*`, `/ws/millionaire/*`
+- Misclue (Solo Mode) → `/api/misclue/ai/turn` (OpenRouter-backed AI turns)
 - Forehead Charades → **no backend**: decks, scoring and tilt run entirely in
   the browser; custom decks and the last setup live in localStorage.
 - Truth or Dare → **no backend**: prompts, players, turn order and pack
   selection run entirely in the browser; the last setup lives in localStorage.
+- Misclue (Party Mode) → **no backend**: pass-the-phone local play.
 
 Set `VITE_API_URL` to the API origin (the devcontainer sets it to
 `http://localhost:8080`). It must be an origin the API's `ALLOWED_ORIGINS`
@@ -84,9 +97,8 @@ npm run lint
 ## Deployment
 
 The build command is `npm run build`, with `dist/` as the publish directory.
-`public/_redirects` supplies the SPA history fallback, so `/word-grid`,
-`/money-ladder`, `/forehead-charades` and `/truth-or-dare` work as direct links
-and survive a refresh inside a game.
+`public/_redirects` supplies the SPA history fallback, so game routes including
+`/misclue` work as direct links and survive a refresh inside a game.
 
 ## Content & trademarks
 
