@@ -3,11 +3,17 @@ export type Route =
   | "/word-grid"
   | "/money-ladder"
   | "/forehead-charades"
-  | "/truth-or-dare";
+  | "/truth-or-dare"
+  | "/out-of-line";
 
 export type HeadSupRoute = "home" | "setup" | "howto" | "decks" | "game";
 
 export type TruthOrDareRoute = "home" | "setup" | "howto" | "game";
+
+export type OutOfLineRoute =
+  | { screen: "home" }
+  | { screen: "howto" }
+  | { screen: "room"; code: string };
 
 const ROUTES: Route[] = [
   "/",
@@ -15,10 +21,12 @@ const ROUTES: Route[] = [
   "/money-ladder",
   "/forehead-charades",
   "/truth-or-dare",
+  "/out-of-line",
 ];
 
 const FOREHEAD_PREFIX = "/forehead-charades";
 const TRUTH_OR_DARE_PREFIX = "/truth-or-dare";
+const OUT_OF_LINE_PREFIX = "/out-of-line";
 
 const cleanPath = (pathname: string): string =>
   pathname.replace(/\/+$/, "") || "/";
@@ -69,6 +77,29 @@ export const resolveTruthOrDareRoute = (
     default:
       return "home";
   }
+};
+
+export const isOutOfLinePath = (pathname: string): boolean => {
+  const clean = cleanPath(pathname);
+  return (
+    clean === OUT_OF_LINE_PREFIX ||
+    clean.startsWith(`${OUT_OF_LINE_PREFIX}/`)
+  );
+};
+
+export const resolveOutOfLineRoute = (
+  pathname: string,
+): OutOfLineRoute => {
+  const clean = cleanPath(pathname);
+  if (clean === `${OUT_OF_LINE_PREFIX}/how-to-play`) {
+    return { screen: "howto" };
+  }
+  const roomPrefix = `${OUT_OF_LINE_PREFIX}/room/`;
+  if (clean.startsWith(roomPrefix)) {
+    const code = decodeURIComponent(clean.slice(roomPrefix.length));
+    if (code) return { screen: "room", code };
+  }
+  return { screen: "home" };
 };
 
 export const navigate = (to: string) => {

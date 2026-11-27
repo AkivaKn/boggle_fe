@@ -680,7 +680,13 @@
 
 @media (min-width: 1000px) {
   .hub-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1300px) {
+  .hub-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 }
 
@@ -754,6 +760,14 @@
 
 .hub-card-rose:hover {
   border-color: rgba(251, 113, 133, 0.38);
+}
+
+.hub-card-violet .hub-card-accent {
+  background: linear-gradient(90deg, #a78bfa, #8b5cf6);
+}
+
+.hub-card-violet:hover {
+  border-color: rgba(167, 139, 250, 0.38);
 }
 
 .hub-card-top {
@@ -831,6 +845,10 @@
 
 .hub-card-rose .hub-card-cta {
   color: #fda4af;
+}
+
+.hub-card-violet .hub-card-cta {
+  color: #c4b5fd;
 }
 
 .hub-card-arrow {

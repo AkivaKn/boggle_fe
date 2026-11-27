@@ -2,12 +2,15 @@ import { useCallback, useEffect, useState } from "react";
 import BoggleApp from "./games/BoggleApp";
 import ForeheadCharadesApp from "./games/headsup/App";
 import MillionaireApp from "./games/millionaire/App";
+import OutOfLineApp from "./games/outofline/App";
 import TruthOrDareApp from "./games/truthordare/App";
 import {
   isHeadSupPath,
+  isOutOfLinePath,
   isTruthOrDarePath,
   navigate,
   resolveHeadSupRoute,
+  resolveOutOfLineRoute,
   resolveRoute,
   resolveTruthOrDareRoute,
   type Route,
@@ -19,7 +22,7 @@ type GameCardProps = {
   blurb: string;
   emoji: string;
   tag: string;
-  accent: "teal" | "amber" | "indigo" | "rose";
+  accent: "teal" | "amber" | "indigo" | "rose" | "violet";
 };
 
 const GameCard = ({ to, title, blurb, emoji, tag, accent }: GameCardProps) => (
@@ -76,6 +79,14 @@ const Lobby = () => (
           accent="rose"
         />
         <GameCard
+          to="/out-of-line"
+          title="Out of Line"
+          blurb="Play the best fill-in-the-blank card, impress the judge, and win the round."
+          emoji="🃏"
+          tag="Cards"
+          accent="violet"
+        />
+        <GameCard
           to="/money-ladder"
           title="The Money Ladder"
           blurb="Climb fifteen rungs, use your lifelines, and chase the top prize."
@@ -114,6 +125,10 @@ export default function App() {
 
   if (isTruthOrDarePath(path)) {
     return <TruthOrDareApp route={resolveTruthOrDareRoute(path)} />;
+  }
+
+  if (isOutOfLinePath(path)) {
+    return <OutOfLineApp route={resolveOutOfLineRoute(path)} />;
   }
 
   const route: Route = resolveRoute(path);

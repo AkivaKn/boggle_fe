@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import QRCode from "react-qr-code";
 import {
   getWsUrl,
   ROOM_CODE_RE,
@@ -20,9 +21,12 @@ function App() {
   );
   const [board, setBoard] = useState<Die[]>([]);
   const [endsAt, setEndsAt] = useState<string>("");
-  const [joinInput, setJoinInput] = useState<string>("");
+  const [joinInput, setJoinInput] = useState<string>(() => {
+    const room = new URLSearchParams(window.location.search).get("room");
+    return room ? room.toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 14) : "";
+  });
   const [logs, setLogs] = useState<string[]>([]);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<"code" | "link" | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
 
@@ -97,12 +101,19 @@ function App() {
     localStorage.removeItem("roomCode");
   };
 
-  const copyRoomCode = () => {
-    if (roomCode) {
-      navigator.clipboard.writeText(roomCode);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-      addLog("Code copied!");
+  const shareLink = roomCode
+    ? `${window.location.origin}/word-grid?room=${encodeURIComponent(roomCode)}`
+    : "";
+
+  const copyText = async (kind: "code" | "link", value: string) => {
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(kind);
+      setTimeout(() => setCopied(null), 2000);
+      addLog(kind === "code" ? "Code copied!" : "Link copied!");
+    } catch {
+      setCopied(null);
     }
   };
 
@@ -214,26 +225,53 @@ function App() {
         ) : (
           <div className="w-full space-y-4">
             <div className="bg-white rounded-3xl p-5 shadow-xl border border-slate-200">
-              <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                    Room Code
-                  </span>
+              <div className="mb-4 pb-4 border-b border-slate-100">
+                <div className="flex justify-between items-start gap-3 mb-3">
+                  <div>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      Room Code
+                    </span>
+                    <div className="font-mono text-2xl sm:text-3xl font-black text-slate-900 tracking-wide mt-1 break-all">
+                      {roomCode || "…"}
+                    </div>
+                  </div>
                   <button
-                    onClick={copyRoomCode}
-                    className={`font-mono text-sm transition-colors mt-0.5 font-bold text-left ${copied ? "text-green-600" : "text-indigo-600"}`}
+                    onClick={handleLeave}
+                    className="px-3 py-1.5 bg-slate-50 text-slate-400 hover:text-red-500 rounded-lg text-[10px] font-bold uppercase transition-all shrink-0"
                   >
-                    {copied
-                      ? "✓ COPIED!"
-                      : `${roomCode || "…"} (Copy)`}
+                    Leave
                   </button>
                 </div>
-                <button
-                  onClick={handleLeave}
-                  className="px-3 py-1.5 bg-slate-50 text-slate-400 hover:text-red-500 rounded-lg text-[10px] font-bold uppercase transition-all"
-                >
-                  Leave
-                </button>
+                <div className="grid sm:grid-cols-[auto,1fr] gap-3 items-center">
+                  <div className="bg-white p-2 rounded-xl border border-slate-200 w-fit mx-auto sm:mx-0">
+                    {shareLink ? (
+                      <QRCode
+                        value={shareLink}
+                        size={112}
+                        bgColor="#FFFFFF"
+                        fgColor="#0F172A"
+                        style={{ height: "auto", maxWidth: "100%", width: "112px" }}
+                      />
+                    ) : null}
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-xs text-slate-500 text-center sm:text-left">Scan to open Word Grid on another phone.</p>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <button
+                        onClick={() => copyText("code", roomCode)}
+                        className="px-3 py-2 rounded-xl bg-indigo-50 text-indigo-700 text-xs font-bold hover:bg-indigo-100 transition-colors"
+                      >
+                        {copied === "code" ? "✓ Code copied" : "Copy code"}
+                      </button>
+                      <button
+                        onClick={() => copyText("link", shareLink)}
+                        className="px-3 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200 transition-colors"
+                      >
+                        {copied === "link" ? "✓ Link copied" : "Copy link"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {!board || board.length === 0 ? (
