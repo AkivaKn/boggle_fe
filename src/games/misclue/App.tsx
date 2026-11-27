@@ -7,12 +7,12 @@ import {
   alivePlayers,
   clueTurnIndex,
   confirmVoteResult,
-  continueAfterNoWinner,
   createGame,
   currentTurnPlayer,
   defaultRoles,
   finishClueRound,
-  nextRound,
+  nextClueRound,
+  nextGame,
   roleLabel,
   selectElimination,
   submitClue,
@@ -78,7 +78,7 @@ export default function MisclueApp({ route }: { route: MisclueRoute }) {
       return;
     }
     if (state.phase === "drifter_guess") {
-      const drifter = state.players.find(p => !p.alive && p.role === "drifter" && !state.results.find(r => r.round === state.round && r.eliminatedSeat === p.seat));
+      const drifter = state.players.find(p => !p.alive && p.role === "drifter" && !state.results.find(r => r.game === state.gameNumber && r.round === state.roundNumber && r.eliminatedSeat === p.seat));
       if (drifter?.isAI) void runAiDrifterGuess(state, drifter);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -115,7 +115,7 @@ export default function MisclueApp({ route }: { route: MisclueRoute }) {
   async function runAiVotesIfNeeded(current: GameState) {
     if (aiLock.current) return;
     const alive = alivePlayers(current);
-    const roundVotes = current.votes.filter(v => v.round === current.round);
+    const roundVotes = current.votes.filter(v => v.game === current.gameNumber && v.round === current.roundNumber);
     const voted = new Set(roundVotes.map(v => v.voterSeat));
     const human = current.players.find(p => !p.isAI && p.alive);
     if (human && !voted.has(human.seat)) return;
@@ -181,9 +181,9 @@ export default function MisclueApp({ route }: { route: MisclueRoute }) {
       characterId: player.characterId || "mara",
       seat: player.seat,
       publicState: {
-        round: current.round,
+        round: current.roundNumber,
         players: current.players.map(p => ({ seat: p.seat, name: p.name, alive: p.alive })),
-        clues: current.clues.filter(c => c.round === current.round).map(c => ({ seat: c.seat, name: c.name, text: c.text })),
+        clues: current.clues.filter(c => c.game === current.gameNumber && c.round === current.roundNumber).map(c => ({ seat: c.seat, name: c.name, text: c.text })),
         eliminated: current.results.flatMap(r => {
           const p = current.players.find(pl => pl.seat === r.eliminatedSeat);
           return p ? [{ seat: p.seat, name: p.name, role: roleLabel(p.role) }] : [];
@@ -202,7 +202,7 @@ export default function MisclueApp({ route }: { route: MisclueRoute }) {
       mode: state.mode,
       humans,
       aiCount,
-      scoreTarget: state.scoreTarget,
+      totalGames: state.totalGames,
       categories: state.selectedCategories ?? (state.category ? [state.category] : []),
       tourists: state.setupTourists,
       drifters: state.setupDrifters,
@@ -246,7 +246,7 @@ function HowTo({ onBack }: { onBack: () => void }) {
     ["Give clues", "Each player gives a short clue. In Party Mode you say it out loud. In Solo Mode you type it so AI characters can react."],
     ["Discuss", "In Party Mode, humans discuss verbally. Solo Mode skips straight to voting."],
     ["Vote", "Eliminate who you think is the odd one out. Ties trigger a revote."],
-    ["Drifter guess", "If the Drifter is eliminated, they get one guess at the Native word. Guess right and they steal the round."],
+    ["Drifter guess", "If the Drifter is eliminated, they get one guess at the Native word. Guess right and they steal the game."],
   ];
   return (
     <>
@@ -281,7 +281,7 @@ function Setup({ onStart, onHowTo, initial }: { onStart: (cfg: SetupConfig) => v
     return ["Player 1", "Player 2", "Player 3"];
   });
   const [aiCount, setAiCount] = useState(initial?.mode === "solo" ? initial.aiCount : 3);
-  const [scoreTarget, setScoreTarget] = useState(initial?.scoreTarget ?? 3);
+  const [totalGames, setTotalGames] = useState(initial?.totalGames ?? 3);
   const [category, setCategory] = useState<string>(initial?.categories?.[0] ?? "all");
 
   const totalPlayers = mode === "party" ? Math.max(0, humans.filter(h => h.trim()).length) : 1 + aiCount;
@@ -305,7 +305,7 @@ function Setup({ onStart, onHowTo, initial }: { onStart: (cfg: SetupConfig) => v
       mode,
       humans: mode === "party" ? humans.filter(h=>h.trim()).map(name=>({name:name.trim()})) : [{name: humans[0].trim() || "You"}],
       aiCount: mode === "solo" ? aiCount : 0,
-      scoreTarget,
+      totalGames,
       categories: category === "all" ? [] : [category],
       tourists,
       drifters,
@@ -432,9 +432,9 @@ function Setup({ onStart, onHowTo, initial }: { onStart: (cfg: SetupConfig) => v
             </div>
           </div>
           <div className="ms-field">
-            <label>Score target</label>
+            <label>Games per match</label>
             <div className="ms-row">
-              {[3,5,7].map(n => <button key={n} className={cx("ms-pill", scoreTarget===n && "active")} onClick={()=>setScoreTarget(n)}>{n}</button>)}
+              {[3,5,7].map(n => <button key={n} className={cx("ms-pill", totalGames===n && "active")} onClick={()=>setTotalGames(n)}>{n}</button>)}
             </div>
           </div>
 
@@ -462,7 +462,7 @@ function YourSecret({ state }: { state: GameState }) {
 function GameScreen({ state, setState, aiBusy, aiError, aiRetry, onExit, onNewGame }: { state: GameState; setState: Dispatch<SetStateAction<GameState | null>>; aiBusy: boolean; aiError: string | null; aiRetry: (() => void) | null; onExit: () => void; onNewGame: () => void }) {
   return (
     <>
-      <TopBar onBack={onExit} right={<div className="ms-stats"><span className="ms-stat">Round <strong>{state.round}</strong></span><span className="ms-stat">Target <strong>{state.scoreTarget}</strong></span></div>} />
+      <TopBar onBack={onExit} right={<div className="ms-stats"><span className="ms-stat">Game <strong>{state.gameNumber}/{state.totalGames}</strong></span><span className="ms-stat">Round <strong>{state.roundNumber}</strong></span></div>} />
       {aiError && <div className="ms-card" style={{marginBottom:12,borderColor:"rgba(255,107,107,.4)",color:"#ffb1b1"}}><div>AI issue: {aiError}</div>{aiRetry && <button className="ms-btn ms-btn-secondary ms-btn-sm" style={{marginTop:10}} onClick={aiRetry}>Retry</button>}</div>}
       {state.phase === "reveal" && <RevealScreen state={state} setState={setState} />}
       {state.phase === "clue" && <ClueScreen state={state} setState={setState} aiBusy={aiBusy} />}
@@ -536,9 +536,11 @@ function ClueScreen({ state, setState, aiBusy }: { state: GameState; setState: D
     setText("");
   };
 
+  const orderStart = clueTurnIndex(state);
+  const clueOrder = [...alive.slice(orderStart), ...alive.slice(0, orderStart)];
+
   if (state.mode === "party") {
-    const start = clueTurnIndex(state);
-    const order = [...alive.slice(start), ...alive.slice(0, start)];
+    const order = clueOrder;
     return (
       <div className="ms-board">
         <div className="ms-card ms-card-strong">
@@ -603,6 +605,22 @@ function ClueScreen({ state, setState, aiBusy }: { state: GameState; setState: D
         )}
 
         <div className="ms-divider" />
+        <p className="ms-kicker" style={{marginBottom:8}}>Clue order</p>
+        <div style={{display:"grid",gap:8,marginBottom:12}}>
+          {clueOrder.map((p, i) => {
+            const done = state.clues.some(c => c.game === state.gameNumber && c.round === state.roundNumber && c.seat === p.seat);
+            const isCurrent = player.seat === p.seat && p.alive;
+            return (
+              <div key={p.seat} className="ms-reveal-item" style={{ border: isCurrent ? "1px solid rgba(245,185,66,.35)" : undefined, background: isCurrent ? "rgba(245,185,66,.07)" : undefined }}>
+                <div className="ms-row" style={{gap:10}}>
+                  <span className="ms-role-badge" style={{background:"rgba(245,185,66,.16)",color:"var(--ms-yellow)",minWidth:32,justifyContent:"center"}}>{i + 1}</span>
+                  <strong>{p.isAI ? `${p.emoji || "🤖"} ` : ""}{p.name}</strong>
+                </div>
+                <span className="ms-muted" style={{fontSize:".85rem"}}>{done ? "Clue given" : isCurrent ? "Now" : "Waiting"}</span>
+              </div>
+            );
+          })}
+        </div>
         <p className="ms-muted" style={{fontSize:".9rem"}}>Alive: {alive.length} · Turn {state.turnIndex+1}/{alive.length}</p>
         {state.message && <p style={{marginTop:12,color:"var(--ms-yellow)",fontWeight:700}}>{state.message}</p>}
       </div>
@@ -612,7 +630,7 @@ function ClueScreen({ state, setState, aiBusy }: { state: GameState; setState: D
         <h3 style={{marginBottom:12}}>Players</h3>
         <div style={{display:"grid",gap:8}}>
           {state.players.map(p => {
-            const clues = state.clues.filter(c=>c.round===state.round && c.seat===p.seat).map(c=>c.text).join(" · ");
+            const clues = state.clues.filter(c=>c.game === state.gameNumber && c.round === state.roundNumber && c.seat===p.seat).map(c=>c.text).join(" · ");
             const isCurrent = player.seat===p.seat && p.alive;
             return (
               <div key={p.seat} className={cx("ms-reveal-item", !p.alive && "is-out")} style={{alignItems:"flex-start", border: isCurrent ? "1px solid rgba(245,185,66,.35)" : undefined, background: isCurrent ? "rgba(245,185,66,.07)" : undefined}}>
@@ -634,7 +652,7 @@ function VoteScreen({ state, setState, aiBusy }: { state: GameState; setState: D
   const [selected, setSelected] = useState<number | null>(null);
   const [revealed, setRevealed] = useState(false);
   const alive = alivePlayers(state);
-  const roundVotes = state.votes.filter(v => v.round === state.round);
+  const roundVotes = state.votes.filter(v => v.game === state.gameNumber && v.round === state.roundNumber);
   const voted = new Set(roundVotes.map(v => v.voterSeat));
 
   // Solo: human votes if not voted; AI auto via effect
@@ -654,7 +672,7 @@ function VoteScreen({ state, setState, aiBusy }: { state: GameState; setState: D
             <>
               <div className="ms-vote-grid">
                 {alive.filter(p=>p.seat!==human.seat).map(p => {
-                  const clues = state.clues.filter(c=>c.round===state.round && c.seat===p.seat).map(c=>c.text).join(" · ");
+                  const clues = state.clues.filter(c=>c.game === state.gameNumber && c.round === state.roundNumber && c.seat===p.seat).map(c=>c.text).join(" · ");
                   return (
                     <button key={p.seat} className={cx("ms-vote-btn", selected===p.seat && "selected")} onClick={()=>setSelected(p.seat)}>
                       <span className="emoji">{p.emoji || "👤"}</span>
@@ -710,7 +728,7 @@ function VoteScreen({ state, setState, aiBusy }: { state: GameState; setState: D
             <p className="ms-muted" style={{marginBottom:16}}>Pick one player.</p>
             <div className="ms-vote-grid">
               {alive.filter(p=>p.seat!==currentVoter.seat).map(p => {
-                const clues = state.clues.filter(c=>c.round===state.round && c.seat===p.seat).map(c=>c.text).join(" · ");
+                const clues = state.clues.filter(c=>c.game === state.gameNumber && c.round === state.roundNumber && c.seat===p.seat).map(c=>c.text).join(" · ");
                 return (
                   <button key={p.seat} className={cx("ms-vote-btn", selected===p.seat && "selected")} onClick={()=>setSelected(p.seat)}>
                     <span className="emoji">👤</span>
@@ -803,7 +821,7 @@ function VoteResultScreen({ state, setState }: { state: GameState; setState: Dis
 }
 function DrifterGuessScreen({ state, setState }: { state: GameState; setState: Dispatch<SetStateAction<GameState | null>> }) {
   const [guess, setGuess] = useState("");
-  const drifter = state.players.find(p => !p.alive && p.role === "drifter" && !state.results.find(r => r.round === state.round && r.eliminatedSeat === p.seat));
+  const drifter = state.players.find(p => !p.alive && p.role === "drifter" && !state.results.find(r => r.game === state.gameNumber && r.round === state.roundNumber && r.eliminatedSeat === p.seat));
   if (!drifter) return null;
   const isAi = drifter.isAI;
 
@@ -814,13 +832,13 @@ function DrifterGuessScreen({ state, setState }: { state: GameState; setState: D
         <p className="ms-kicker">Drifter guess</p>
         <div className="ms-big-emoji">🩷</div>
         <h2 className="ms-section-title" style={{fontSize:"2rem"}}>{drifter.name} was the Drifter!</h2>
-        <p className="ms-muted" style={{marginBottom:20}}>One chance to guess the Natives’ secret word. Get it right to steal the round.</p>
+        <p className="ms-muted" style={{marginBottom:20}}>One chance to guess the Natives’ secret word. Get it right to steal the game.</p>
         {state.mode === "solo" && (
           <div style={{marginBottom:16,textAlign:"left"}}>
             <h3 style={{marginBottom:8,fontSize:".95rem"}}>Clues this round</h3>
             <div className="ms-reveal-list" style={{marginTop:0}}>
               {state.players.filter(p=>p.alive || p.seat===drifter.seat).map(p => {
-                const clues = state.clues.filter(c=>c.round===state.round && c.seat===p.seat).map(c=>c.text).join(" · ");
+                const clues = state.clues.filter(c=>c.game === state.gameNumber && c.round === state.roundNumber && c.seat===p.seat).map(c=>c.text).join(" · ");
                 return (
                   <div className="ms-reveal-item" key={p.seat}>
                     <div>
@@ -856,9 +874,9 @@ function RoundResultScreen({ state, setState }: { state: GameState; setState: Di
   return (
     <div className="ms-center">
       <div className="ms-card ms-card-strong ms-result">
-        <p className="ms-kicker">Round {result.round} result</p>
+        <p className="ms-kicker">Game {result.game} · Round {result.round}</p>
         <div className="ms-big-emoji">{result.winner === "natives" ? "🟢" : result.winner === "drifter_steal" ? "🩷" : result.winner === "infiltrators" ? "🟡" : "🔍"}</div>
-        <div className="big">{result.winner === "natives" ? "Natives win!" : result.winner === "drifter_steal" ? "Drifter steal!" : result.winner === "infiltrators" ? "Infiltrators win!" : eliminated ? "Player eliminated" : "Round continues"}</div>
+        <div className="big">{result.winner === "natives" ? "Natives win the game!" : result.winner === "drifter_steal" ? "Drifter steal!" : result.winner === "infiltrators" ? "Infiltrators win the game!" : eliminated ? "Player eliminated" : "Round continues"}</div>
         <p className="summary">{result.summary}</p>
         {result.winner && (
           <div className="ms-card" style={{ padding: 16, marginBottom: 16, background: "rgba(255,255,255,.04)", width: "100%" }}>
@@ -899,7 +917,7 @@ function RoundResultScreen({ state, setState }: { state: GameState; setState: Di
         )}
         <div className="ms-reveal-list">
           {state.players.map(p => {
-            const clues = state.clues.filter(c=>c.round===state.round && c.seat===p.seat).map(c=>c.text).join(" · ");
+            const clues = state.clues.filter(c=>c.game === state.gameNumber && c.round === state.roundNumber && c.seat===p.seat).map(c=>c.text).join(" · ");
             return (
               <div className="ms-reveal-item" key={p.seat} style={{alignItems:"flex-start"}}>
                 <div>
@@ -915,11 +933,12 @@ function RoundResultScreen({ state, setState }: { state: GameState; setState: Di
         </div>
         <div className="ms-divider" />
         <div className="ms-scoreboard">
-          <div className="ms-score-row"><span>Natives score</span><strong>{Math.max(0,...state.players.filter(p=>p.role==="native").map(p=>p.score))}</strong></div>
-          <div className="ms-score-row"><span>Tourists & Drifters score</span><strong>{Math.max(0,...state.players.filter(p=>p.role==="tourist"||p.role==="drifter").map(p=>p.score))}</strong></div>
+          {state.players.slice().sort((a,b)=>b.score-a.score || a.seat-b.seat).map(p => (
+            <div className="ms-score-row" key={p.seat}><span>{p.emoji ? p.emoji+" " : ""}{p.name}</span><strong>{p.score}</strong></div>
+          ))}
         </div>
         <div className="ms-actions" style={{justifyContent:"center"}}>
-          {result.winner ? <button className="ms-btn ms-btn-primary" onClick={()=>setState(prev=>prev?nextRound(prev):prev)}>Next</button> : <button className="ms-btn ms-btn-primary" onClick={()=>setState(prev=>prev?continueAfterNoWinner(prev):prev)}>Continue</button>}
+          {result.winner ? <button className="ms-btn ms-btn-primary" onClick={()=>setState(prev=>prev?nextGame(prev):prev)}>Next game</button> : <button className="ms-btn ms-btn-primary" onClick={()=>setState(prev=>prev?nextClueRound(prev):prev)}>Next round</button>}
         </div>
       </div>
     </div>
@@ -927,34 +946,28 @@ function RoundResultScreen({ state, setState }: { state: GameState; setState: Di
 }
 
 function MatchEndScreen({ state, onExit, onNewGame }: { state: GameState; onExit: () => void; onNewGame: () => void }) {
-  const winner = state.winner;
+  const ranked = [...state.players].sort((a, b) => b.score - a.score || a.seat - b.seat);
+  const winners = ranked.filter(p => state.matchWinners.includes(p.seat));
+  const title = winners.length === 1
+    ? `${winners[0].name} wins the match!`
+    : `Tie! ${winners.map(w => w.name).join(" & ")} win!`;
   return (
     <div className="ms-center">
       <div className="ms-card ms-card-strong ms-result">
         <p className="ms-kicker">Match over</p>
-        <div className="ms-big-emoji">{winner === "natives" ? "🏆" : "🎭"}</div>
-        <div className="big">{winner === "natives" ? "Natives win the match!" : "Tourists & Drifters win the match!"}</div>
-        <p className="summary">Final score target was {state.scoreTarget}. Play again with new words and random roles.</p>
+        <div className="ms-big-emoji">🏆</div>
+        <div className="big">{title}</div>
+        <p className="summary">After {state.totalGames} games, highest score wins.</p>
         <div className="ms-card" style={{ padding: 16, marginBottom: 16, background: "rgba(255,255,255,.04)", width: "100%" }}>
-          <h3 style={{ marginBottom: 10 }}>The words were</h3>
+          <h3 style={{ marginBottom: 10 }}>Final scores</h3>
           <div className="ms-reveal-list" style={{ marginTop: 0 }}>
-            <div className="ms-reveal-item"><span><strong>Native</strong></span><span className="ms-role-badge ms-role-native">{state.nativeWord}</span></div>
-            <div className="ms-reveal-item"><span><strong>Tourist</strong></span><span className="ms-role-badge ms-role-tourist">{state.touristWord}</span></div>
-          </div>
-        </div>
-        <div className="ms-reveal-list">
-          {state.players.map(p => {
-            const clues = state.clues.filter(c=>c.round===state.round && c.seat===p.seat).map(c=>c.text).join(" · ");
-            return (
-              <div className="ms-reveal-item" key={p.seat} style={{alignItems:"flex-start"}}>
-                <div>
-                  <strong>{p.emoji ? p.emoji+" " : ""}{p.name}</strong>
-                  {clues && <div style={{fontSize:".78rem",color:"var(--ms-muted)",marginTop:2}}>{clues}</div>}
-                </div>
-                <span className={cx("ms-role-badge", roleBadge(p.role))}>{roleLabel(p.role)} · {p.score}</span>
+            {ranked.map((p, i) => (
+              <div className="ms-reveal-item" key={p.seat}>
+                <span><strong>{i + 1}. {p.emoji ? p.emoji + " " : ""}{p.name}</strong></span>
+                <span className="ms-role-badge" style={{ background: state.matchWinners.includes(p.seat) ? "rgba(245,185,66,.18)" : "rgba(255,255,255,.08)", color: state.matchWinners.includes(p.seat) ? "var(--ms-yellow)" : "var(--ms-text)" }}>{p.score} pt{p.score !== 1 ? "s" : ""}</span>
               </div>
-            );
-          })}
+            ))}
+          </div>
         </div>
         <div className="ms-actions" style={{justifyContent:"center",marginTop:20,gap:12,flexWrap:"wrap"}}>
           <button className="ms-btn ms-btn-primary" onClick={onNewGame}>Rematch</button>
