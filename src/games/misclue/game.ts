@@ -115,8 +115,8 @@ export function assignRoles(n: number, overrides?: { tourists?: number; drifters
   let tourists = Math.max(0, Math.floor(overrides?.tourists ?? defaults.tourists));
   let drifters = Math.max(0, Math.floor(overrides?.drifters ?? defaults.drifters));
   if (tourists + drifters < 1) tourists = 1;
-  // Natives must outnumber infiltrators at start to avoid immediate infiltrator win.
-  const maxInfiltrators = Math.max(1, Math.ceil(total / 2) - 1);
+  // Infiltrators only win on a majority, so 50/50 is allowed; natives must not be outnumbered.
+  const maxInfiltrators = Math.max(1, Math.floor(total / 2));
   if (tourists + drifters > maxInfiltrators) {
     let overflow = tourists + drifters - maxInfiltrators;
     const reduceTourists = Math.min(tourists, overflow);
@@ -335,7 +335,7 @@ function checkWinner(players: Player[]): RoundResult["winner"] {
   const natives = alive.filter(p => p.role === "native").length;
   const infiltrators = alive.filter(p => p.role === "tourist" || p.role === "drifter").length;
   if (infiltrators === 0) return "natives";
-  if (infiltrators >= natives) return "infiltrators";
+  if (infiltrators > natives) return "infiltrators";
   return null;
 }
 
