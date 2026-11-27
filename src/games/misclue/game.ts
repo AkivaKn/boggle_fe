@@ -58,6 +58,7 @@ export function createGame(cfg: SetupConfig): GameState {
     clues: [],
     votes: [],
     voteResult: null,
+    revoteCount: 0,
     results: [],
     nativeWord: pair.native,
     touristWord: pair.tourist,
@@ -214,7 +215,7 @@ export function submitClue(state: GameState, seat: number, text: string): GameSt
 }
 
 export function startVote(state: GameState): GameState {
-  return { ...state, phase: "vote", turnIndex: 0, voteIndex: 0, votes: state.votes.filter(v => v.round !== state.round) };
+  return { ...state, phase: "vote", turnIndex: 0, voteIndex: 0, revoteCount: 0, voteResult: null, votes: state.votes.filter(v => v.round !== state.round), message: null };
 }
 
 export function submitVote(state: GameState, voterSeat: number, targetSeat: number): GameState {
@@ -240,23 +241,52 @@ function resolveVotes(state: GameState): GameState {
   for (const c of counts.values()) max = Math.max(max, c);
   const top = [...counts.entries()].filter(([,c]) => c === max).map(([s]) => s);
   if (top.length !== 1) {
+    if ((state.revoteCount ?? 0) < 1) {
+      return {
+        ...state,
+        votes: state.votes.filter(v => v.round !== state.round),
+        phase: "vote",
+        voteIndex: 0,
+        voteResult: null,
+        revoteCount: (state.revoteCount ?? 0) + 1,
+        message: "Tie vote - revote once.",
+      };
+    }
+    const tieResult: RoundResult = {
+      round: state.round,
+      eliminatedSeat: null,
+      eliminatedRole: null,
+      winner: null,
+      summary: "Tie vote again - no one was eliminated.",
+    };
     return {
       ...state,
-      votes: [],
-      phase: "vote",
-      voteIndex: 0,
+      results: [...state.results, tieResult],
+      phase: "reveal_result",
       voteResult: null,
-      message: "Tie vote - revote!",
+      revoteCount: 0,
+      message: tieResult.summary,
     };
   }
   const eliminatedSeat = top[0];
   const countsArr = [...counts.entries()].map(([seat, votes]) => ({ seat, votes })).sort((a,b)=>b.votes-a.votes || a.seat-b.seat);
-  return {
-    ...state,
-    phase: "vote_result",
-    voteResult: { eliminatedSeat, counts: countsArr, votes: roundVotes },
-    message: null,
-  };
+  const voteResult = { eliminatedSeat, counts: countsArr, votes: roundVotes };
+  const eliminated = state.players.find(p => p.seat === eliminatedSeat) ?? null;
+  if (!eliminated) return { ...state, phase: "vote_result", voteResult, message: null };
+
+  if (eliminated.role === "drifter") {
+    const players = state.players.map(p => p.seat === eliminatedSeat ? { ...p, alive: false } : p);
+    return {
+      ...state,
+      players,
+      phase: "vote_result",
+      voteResult,
+      message: `${eliminated.name} was the Drifter! They get one guess.`,
+    };
+  }
+
+  const players = state.players.map(p => p.seat === eliminatedSeat ? { ...p, alive: false } : p);
+  return finalizeElimination({ ...state, players, voteResult, message: null }, eliminatedSeat, eliminated.role, undefined, undefined);
 }
 
 export function confirmVoteResult(state: GameState): GameState {
@@ -265,7 +295,7 @@ export function confirmVoteResult(state: GameState): GameState {
   const eliminated = state.players.find(p => p.seat === vr.eliminatedSeat) ?? null;
   if (!eliminated) return state;
   const players = state.players.map(p => p.seat === vr.eliminatedSeat ? { ...p, alive: false } : p);
-  const nextState = { ...state, players, voteResult: null, message: null };
+  const nextState = { ...state, players, message: null };
   if (eliminated.role === "drifter") {
     return { ...nextState, phase: "drifter_guess", message: `${eliminated.name} was the Drifter! They get one guess.` };
   }
@@ -357,6 +387,8 @@ export function continueAfterNoWinner(state: GameState): GameState {
     phase: "clue",
     turnIndex: clueTurnIndex({ ...state, turnStartSeat: state.turnStartSeat }),
     votes: state.votes.filter(v => v.round !== state.round),
+    voteResult: null,
+    revoteCount: 0,
     message: null,
   };
 }
@@ -378,6 +410,7 @@ export function nextRound(state: GameState): GameState {
     clues: [],
     votes: [],
     voteResult: null,
+    revoteCount: 0,
     nativeWord: pair.native,
     touristWord: pair.tourist,
     winner: null,

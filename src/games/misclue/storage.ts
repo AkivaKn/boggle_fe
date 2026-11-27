@@ -29,6 +29,7 @@ export function loadState(): GameState | null {
       state.setupTourists = state.setupTourists ?? tourists;
       state.setupDrifters = state.setupDrifters ?? drifters;
     }
+    if (state.revoteCount == null) state.revoteCount = 0;
     return state as GameState;
   } catch {
     return null;

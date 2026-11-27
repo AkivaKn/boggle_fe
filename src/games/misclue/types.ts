@@ -72,6 +72,7 @@ export type GameState = {
   clues: Clue[];
   votes: Vote[];
   voteResult: VoteResult | null;
+  revoteCount: number;
   results: RoundResult[];
   nativeWord: string;
   touristWord: string;
