@@ -218,7 +218,7 @@ export function finishClueRound(state: GameState): GameState {
   if (state.phase !== "clue") return state;
   return {
     ...state,
-    phase: state.mode === "party" ? "discussion" : "vote",
+    phase: state.mode === "party" ? "elimination_select" : "vote",
     turnIndex: 0,
     voteIndex: 0,
     message: null,

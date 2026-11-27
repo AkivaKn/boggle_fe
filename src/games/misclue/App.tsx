@@ -552,6 +552,8 @@ function ClueScreen({ state, setState, aiBusy }: { state: GameState; setState: D
   };
 
   if (state.mode === "party") {
+    const start = clueTurnIndex(state);
+    const order = [...alive.slice(start), ...alive.slice(0, start)];
     return (
       <div className="ms-board">
         <div className="ms-card ms-card-strong">
@@ -561,9 +563,9 @@ function ClueScreen({ state, setState, aiBusy }: { state: GameState; setState: D
               <h2 className="ms-section-title">Give clues in order</h2>
             </div>
           </div>
-          <p className="ms-muted" style={{marginBottom:16}}>Everyone is in the room. Give your clues out loud in this order, then continue to discussion.</p>
+          <p className="ms-muted" style={{marginBottom:16}}>Everyone is in the room. Give your clues out loud in this order, then discuss and eliminate.</p>
           <div style={{display:"grid",gap:8,marginBottom:16}}>
-            {alive.map((p, i) => (
+            {order.map((p, i) => (
               <div key={p.seat} className="ms-reveal-item">
                 <div className="ms-row" style={{gap:10}}>
                   <span className="ms-role-badge" style={{background:"rgba(245,185,66,.16)",color:"var(--ms-yellow)",minWidth:32,justifyContent:"center"}}>{i + 1}</span>
@@ -574,7 +576,7 @@ function ClueScreen({ state, setState, aiBusy }: { state: GameState; setState: D
             ))}
           </div>
           <div className="ms-actions">
-            <button className="ms-btn ms-btn-primary" onClick={()=>setState(prev=>prev?finishClueRound(prev):prev)}>All clues given</button>
+            <button className="ms-btn ms-btn-primary" onClick={()=>setState(prev=>prev?finishClueRound(prev):prev)}>Clues done - discuss & eliminate</button>
           </div>
           {state.message && <p style={{marginTop:12,color:"var(--ms-yellow)",fontWeight:700}}>{state.message}</p>}
         </div>
@@ -770,20 +772,16 @@ function EliminationSelectScreen({ state, setState }: { state: GameState; setSta
   return (
     <div className="ms-center">
       <div className="ms-card ms-card-strong">
-        <p className="ms-kicker">Group decision</p>
+        <p className="ms-kicker">Discuss & eliminate</p>
         <h2 className="ms-section-title" style={{fontSize:"1.8rem"}}>Who was eliminated?</h2>
-        <p className="ms-muted" style={{marginBottom:16}}>The group decides together. Select the player who is out.</p>
+        <p className="ms-muted" style={{marginBottom:16}}>Discuss together, then select the player the group voted out.</p>
         <div className="ms-vote-grid">
-          {alive.map(p => {
-            const clues = state.clues.filter(c=>c.round===state.round && c.seat===p.seat).map(c=>c.text).join(" · ");
-            return (
-              <button key={p.seat} className="ms-vote-btn" onClick={()=>setState(prev=>prev?selectElimination(prev,p.seat):prev)}>
-                <span className="emoji">👤</span>
-                <span className="name">{p.name}</span>
-                <span style={{display:"block",fontSize:".72rem",color:"var(--ms-muted)",marginTop:4,lineHeight:1.3,fontWeight:600}}>{clues || "No clue"}</span>
-              </button>
-            );
-          })}
+          {alive.map(p => (
+            <button key={p.seat} className="ms-vote-btn" onClick={()=>setState(prev=>prev?selectElimination(prev,p.seat):prev)}>
+              <span className="emoji">👤</span>
+              <span className="name">{p.name}</span>
+            </button>
+          ))}
         </div>
       </div>
     </div>
@@ -850,22 +848,24 @@ function DrifterGuessScreen({ state, setState }: { state: GameState; setState: D
         <div className="ms-big-emoji">🩷</div>
         <h2 className="ms-section-title" style={{fontSize:"2rem"}}>{drifter.name} was the Drifter!</h2>
         <p className="ms-muted" style={{marginBottom:20}}>One chance to guess the Natives’ secret word. Get it right to steal the round.</p>
-        <div style={{marginBottom:16,textAlign:"left"}}>
-          <h3 style={{marginBottom:8,fontSize:".95rem"}}>Clues this round</h3>
-          <div className="ms-reveal-list" style={{marginTop:0}}>
-            {state.players.filter(p=>p.alive || p.seat===drifter.seat).map(p => {
-              const clues = state.clues.filter(c=>c.round===state.round && c.seat===p.seat).map(c=>c.text).join(" · ");
-              return (
-                <div className="ms-reveal-item" key={p.seat}>
-                  <div>
-                    <strong>{p.emoji ? p.emoji+" " : ""}{p.name}</strong>
-                    <div style={{fontSize:".78rem",color:"var(--ms-muted)",marginTop:2}}>{clues || "No clue"}</div>
+        {state.mode === "solo" && (
+          <div style={{marginBottom:16,textAlign:"left"}}>
+            <h3 style={{marginBottom:8,fontSize:".95rem"}}>Clues this round</h3>
+            <div className="ms-reveal-list" style={{marginTop:0}}>
+              {state.players.filter(p=>p.alive || p.seat===drifter.seat).map(p => {
+                const clues = state.clues.filter(c=>c.round===state.round && c.seat===p.seat).map(c=>c.text).join(" · ");
+                return (
+                  <div className="ms-reveal-item" key={p.seat}>
+                    <div>
+                      <strong>{p.emoji ? p.emoji+" " : ""}{p.name}</strong>
+                      <div style={{fontSize:".78rem",color:"var(--ms-muted)",marginTop:2}}>{clues || "No clue"}</div>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
         {isAi ? (
           <div className="ms-thinking" style={{justifyContent:"center"}}><span className="ms-dot"/><span className="ms-dot"/><span className="ms-dot"/> {drifter.name} is guessing...</div>
         ) : (
