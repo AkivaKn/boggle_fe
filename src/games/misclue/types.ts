@@ -66,7 +66,7 @@ export type GameState = {
   mode: Mode;
   phase: Phase;
   round: number;
-  turnIndex: number; // index in alive turn order
+  turnIndex: number; // clues given this clue round (position in rotated order)
   turnStartSeat: number; // seat that starts clue rounds for the current round
   players: Player[];
   clues: Clue[];
@@ -78,6 +78,7 @@ export type GameState = {
   touristWord: string;
   category: string;
   selectedCategories: string[];
+  usedPairIds: string[];
   scoreTarget: number;
   setupTourists: number;
   setupDrifters: number;

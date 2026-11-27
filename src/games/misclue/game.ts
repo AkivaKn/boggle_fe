@@ -17,7 +17,7 @@ export type SetupConfig = {
 };
 
 export function createGame(cfg: SetupConfig): GameState {
-  const pair = pickPair(cfg.categories);
+  const { pair, usedPairIds } = pickPair(cfg.categories);
   const totalPlayers = cfg.mode === "solo" ? 1 + cfg.aiCount : cfg.humans.length;
   const roleCfg = defaultRoles(totalPlayers);
   const setupTourists = cfg.tourists ?? roleCfg.tourists;
@@ -64,6 +64,7 @@ export function createGame(cfg: SetupConfig): GameState {
     touristWord: pair.tourist,
     category: pair.category,
     selectedCategories: cfg.categories,
+    usedPairIds,
     scoreTarget: cfg.scoreTarget,
     setupTourists: actualTourists,
     setupDrifters: actualDrifters,
@@ -75,9 +76,13 @@ export function createGame(cfg: SetupConfig): GameState {
   };
 }
 
-function pickPair(categories: string[]): WordPair {
+function pickPair(categories: string[], usedIds: string[] = []): { pair: WordPair; usedPairIds: string[] } {
   const pool = categories.length ? WORD_PAIRS.filter(p => categories.includes(p.category)) : WORD_PAIRS;
-  return pick(pool.length ? pool : WORD_PAIRS);
+  const base = pool.length ? pool : WORD_PAIRS;
+  const unused = base.filter(p => !usedIds.includes(p.id));
+  const source = unused.length ? unused : base;
+  const pair = pick(source);
+  return { pair, usedPairIds: unused.length ? [...usedIds, pair.id] : [pair.id] };
 }
 
 const ROLE_TABLE: Record<number, { tourists: number; drifters: number }> = {
@@ -148,7 +153,9 @@ export function alivePlayers(state: GameState): Player[] {
 
 export function currentTurnPlayer(state: GameState): Player | null {
   const alive = alivePlayers(state);
-  return alive[state.turnIndex] ?? null;
+  if (alive.length === 0) return null;
+  const start = clueTurnIndex(state);
+  return alive[(start + state.turnIndex) % alive.length] ?? null;
 }
 
 function randomStartSeat(players: Player[], round: number): number {
@@ -181,15 +188,10 @@ export function clueTurnIndex(state: Pick<GameState, "players" | "round" | "turn
   return idx >= 0 ? idx : 0;
 }
 
-export function firstClueTurnIndex(state: Pick<GameState, "players" | "round"> & { turnStartSeat?: number }): number {
-  return clueTurnIndex({ ...state, turnStartSeat: state.turnStartSeat ?? state.players.filter(p=>p.alive).sort((a,b)=>a.seat-b.seat)[0]?.seat ?? 1 });
-}
-
 export function advanceReveal(state: GameState): GameState {
   const next = state.revealIndex + 1;
   if (next >= state.players.length) {
-    const nextState = { ...state, revealIndex: next, phase: "clue" as const, turnIndex: 0, message: null };
-    return { ...nextState, turnIndex: firstClueTurnIndex(nextState) };
+    return { ...state, revealIndex: next, phase: "clue" as const, turnIndex: 0, message: null };
   }
   return { ...state, revealIndex: next };
 }
@@ -197,7 +199,7 @@ export function advanceReveal(state: GameState): GameState {
 export function submitClue(state: GameState, seat: number, text: string): GameState {
   if (state.phase !== "clue") return state;
   const alive = alivePlayers(state);
-  const current = alive[state.turnIndex];
+  const current = currentTurnPlayer(state);
   if (!current || current.seat !== seat) return state;
   const player = state.players.find(p => p.seat === seat);
   if (!player || !player.alive) return state;
@@ -207,7 +209,7 @@ export function submitClue(state: GameState, seat: number, text: string): GameSt
   let phase: GameState["phase"] = "clue";
   let voteIndex = state.voteIndex;
   if (turnIndex >= alive.length) {
-    phase = state.mode === "party" ? "discussion" : "vote";
+    phase = state.mode === "party" ? "elimination_select" : "vote";
     turnIndex = 0;
     voteIndex = 0;
   }
@@ -314,6 +316,7 @@ export function confirmVoteResult(state: GameState): GameState {
 }
 
 export function selectElimination(state: GameState, eliminatedSeat: number): GameState {
+  if (state.phase !== "elimination_select") return state;
   const eliminated = state.players.find(p => p.seat === eliminatedSeat && p.alive) ?? null;
   if (!eliminated) return state;
   const players = state.players.map(p => p.seat === eliminatedSeat ? { ...p, alive: false } : p);
@@ -343,7 +346,7 @@ function finalizeElimination(state: GameState, eliminatedSeat: number, eliminate
     players = players.map(p => p.role === "drifter" ? { ...p, score: p.score + 2 } : p);
   } else {
     if (eliminatedRole === "drifter" && drifterGuess !== undefined) {
-      summary = `${eliminated?.name ?? "Drifter"} guessed "${drifterGuess}" - wrong! The Native word was "${state.nativeWord}". `;
+      summary = `${eliminated?.name ?? "Drifter"} guessed "${drifterGuess}" - wrong. `;
     } else {
       summary = `${eliminated?.name ?? "Someone"} was eliminated and was a ${roleLabel(eliminatedRole)}. `;
     }
@@ -377,6 +380,7 @@ function checkWinner(players: Player[]): RoundResult["winner"] {
   const infiltrators = alive.filter(p => p.role === "tourist" || p.role === "drifter").length;
   if (infiltrators === 0) return "natives";
   if (infiltrators > natives) return "infiltrators";
+  if (alive.length === 2 && infiltrators === 1) return "infiltrators"; // 1v1 endgame
   return null;
 }
 
@@ -396,7 +400,7 @@ export function continueAfterNoWinner(state: GameState): GameState {
   return {
     ...state,
     phase: "clue",
-    turnIndex: clueTurnIndex({ ...state, turnStartSeat: state.turnStartSeat }),
+    turnIndex: 0,
     votes: state.votes.filter(v => v.round !== state.round),
     voteResult: null,
     revoteCount: 0,
@@ -405,7 +409,7 @@ export function continueAfterNoWinner(state: GameState): GameState {
 }
 
 export function nextRound(state: GameState): GameState {
-  const pair = pickPair(state.category ? [state.category] : []);
+  const { pair, usedPairIds } = pickPair(state.selectedCategories, state.usedPairIds);
   const roles = assignRoles(state.players.length);
   const players = state.players.map((p, i) => ({
     ...p, role: roles[i], word: wordForRole(roles[i], pair), alive: true,
@@ -422,6 +426,7 @@ export function nextRound(state: GameState): GameState {
     votes: [],
     voteResult: null,
     revoteCount: 0,
+    usedPairIds,
     nativeWord: pair.native,
     touristWord: pair.tourist,
     winner: null,

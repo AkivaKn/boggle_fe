@@ -100,10 +100,7 @@
 .ms-reveal-card { text-align: center; padding: 32px 24px; background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.05)); }
 .ms-reveal-name { font-size: clamp(1.8rem,5vw,2.8rem); font-weight: 950; margin: 0; }
 .ms-reveal-hint { color: var(--ms-muted); margin: 10px 0 24px; font-size: 1rem; }
-.ms-secret { margin: 24px auto; padding: 24px; border-radius: 24px; max-width: 420px; border: 1px solid rgba(255,255,255,.14); }
-.ms-secret.role-native { background: linear-gradient(180deg, rgba(53,226,208,.2), rgba(53,226,208,.06)); }
-.ms-secret.role-tourist { background: linear-gradient(180deg, rgba(255,209,102,.2), rgba(255,209,102,.06)); }
-.ms-secret.role-drifter { background: linear-gradient(180deg, rgba(255,92,168,.22), rgba(255,92,168,.06)); }
+.ms-secret { margin: 24px auto; padding: 24px; border-radius: 24px; max-width: 420px; border: 1px solid rgba(255,255,255,.14); background: linear-gradient(180deg, rgba(120,160,255,.16), rgba(120,160,255,.04)); }
 .ms-secret-label { font-size: .75rem; font-weight: 900; text-transform: uppercase; letter-spacing: .14em; color: var(--ms-muted); margin-bottom: 8px; }
 .ms-secret-word { font-size: clamp(2rem,7vw,3.4rem); font-weight: 950; line-height: 1; margin: 0; word-break: break-word; }
 .ms-secret-role { display: inline-block; margin-top: 14px; padding: 8px 14px; border-radius: 999px; font-weight: 800; font-size: .85rem; background: rgba(0,0,0,.18); }
