@@ -204,26 +204,30 @@ export default function MisclueApp({ route }: { route: MisclueRoute }) {
     };
   }
 
+  const startNewFromState = () => {
+    if (!state) return;
+    const humans = state.players.filter(p => !p.isAI).map(p => ({ name: p.name }));
+    const aiCount = state.players.filter(p => p.isAI).length;
+    setSetupPrefill({
+      mode: state.mode,
+      humans,
+      aiCount,
+      scoreTarget: state.scoreTarget,
+      categories: state.selectedCategories ?? (state.category ? [state.category] : []),
+      tourists: state.setupTourists,
+      drifters: state.setupDrifters,
+    });
+    setState(null);
+    clearState();
+  };
+
   if (route === "howto") return <Shell><HowTo onBack={() => go("home")} /></Shell>;
-  if (route === "play") {
-    if (!state) return <Shell><Setup initial={setupPrefill} onStart={(cfg) => { setSetupPrefill(null); const g = createGame(cfg); setState(g); }} onBack={() => { setSetupPrefill(null); go("home"); }} /></Shell>;
-    return <Shell><GameScreen state={state} setState={setState} aiBusy={aiBusy} aiError={aiError} aiRetry={aiRetry} onExit={resetToHome} onNewGame={() => {
-      const humans = state.players.filter(p => !p.isAI).map(p => ({ name: p.name }));
-      const aiCount = state.players.filter(p => p.isAI).length;
-      setSetupPrefill({
-        mode: state.mode,
-        humans,
-        aiCount,
-        scoreTarget: state.scoreTarget,
-        categories: state.selectedCategories ?? (state.category ? [state.category] : []),
-        tourists: state.setupTourists,
-        drifters: state.setupDrifters,
-      });
-      setState(null);
-      clearState();
-    }} /></Shell>;
+
+  if (state) {
+    return <Shell><GameScreen state={state} setState={setState} aiBusy={aiBusy} aiError={aiError} aiRetry={aiRetry} onExit={resetToHome} onNewGame={startNewFromState} /></Shell>;
   }
-  return <Shell><Landing hasSave={!!state} onPlay={() => go("play")} onHowTo={() => go("howto")} onResume={() => go("play")} onNew={resetToHome} /></Shell>;
+
+  return <Shell><Setup initial={setupPrefill} onStart={(cfg) => { setSetupPrefill(null); const g = createGame(cfg); setState(g); }} onHowTo={() => go("howto")} /></Shell>;
 }
 
 function Shell({ children }: { children: ReactNode }) {
@@ -237,31 +241,11 @@ function TopBar({ onBack, right }: { onBack?: () => void; right?: React.ReactNod
         {onBack && <button className="ms-back" onClick={onBack}>← Back</button>}
         <div className="ms-brand"><span className="ms-brand-badge">🕵️</span> Misclue</div>
       </div>
-      {right}
-    </div>
-  );
-}
-
-function Landing({ hasSave, onPlay, onHowTo, onResume, onNew }: { hasSave: boolean; onPlay: () => void; onHowTo: () => void; onResume: () => void; onNew: () => void }) {
-  return (
-    <>
-      <TopBar />
-      <section className="ms-hero">
-        <p className="ms-kicker">Social deduction · secret words</p>
-        <h1 className="ms-title">Find the <span className="accent">Misclue</span>.</h1>
-        <p className="ms-sub">Everyone gets a secret word - almost everyone. Natives share a word, Tourists get a similar one, and the Drifter has no word at all. Give clues, spot the odd one out, and don’t get caught bluffing.</p>
-        <div className="ms-actions">
-          {hasSave ? <button className="ms-btn ms-btn-primary" onClick={onResume}>Resume game</button> : <button className="ms-btn ms-btn-primary" onClick={onPlay}>Play</button>}
-          <button className="ms-btn ms-btn-secondary" onClick={onHowTo}>How to play</button>
-          {hasSave && <button className="ms-btn ms-btn-ghost" onClick={onNew}>New game</button>}
-        </div>
-      </section>
-      <div className="ms-grid ms-grid-3" style={{marginTop:24}}>
-        <div className="ms-card"><div className="ms-big-emoji">🟢</div><h3>Natives</h3><p>Same secret word. Find the impostors.</p></div>
-        <div className="ms-card"><div className="ms-big-emoji">🟡</div><h3>Tourists</h3><p>Similar word. Blend in without being obvious.</p></div>
-        <div className="ms-card"><div className="ms-big-emoji">🩷</div><h3>Drifter</h3><p>No word. Bluff, survive, and steal the round with a perfect guess.</p></div>
+      <div className="ms-row" style={{ gap: 8 }}>
+        {right}
+        <button className="ms-back" onClick={() => navigate("/")}>All games</button>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -296,8 +280,8 @@ function HowTo({ onBack }: { onBack: () => void }) {
   );
 }
 
-function Setup({ onStart, onBack, initial }: { onStart: (cfg: SetupConfig) => void; onBack: () => void; initial?: SetupConfig | null }) {
-  const [mode, setMode] = useState<Mode | null>(initial?.mode ?? null);
+function Setup({ onStart, onHowTo, initial }: { onStart: (cfg: SetupConfig) => void; onHowTo: () => void; initial?: SetupConfig | null }) {
+  const [mode, setMode] = useState<Mode>(initial?.mode ?? "party");
   const [humans, setHumans] = useState<string[]>(() => {
     if (initial?.humans?.length) {
       if (initial.mode === "party") return initial.humans.map(h => h.name);
@@ -309,29 +293,15 @@ function Setup({ onStart, onBack, initial }: { onStart: (cfg: SetupConfig) => vo
   const [scoreTarget, setScoreTarget] = useState(initial?.scoreTarget ?? 3);
   const [category, setCategory] = useState<string>(initial?.categories?.[0] ?? "all");
 
-  const totalPlayers = mode === "party" ? Math.max(0, humans.filter(h => h.trim()).length) : (mode === "solo" ? 1 + aiCount : 0);
+  const totalPlayers = mode === "party" ? Math.max(0, humans.filter(h => h.trim()).length) : 1 + aiCount;
   const roleDefaults = defaultRoles(Math.max(3, Math.min(20, totalPlayers || 3)));
   const [tourists, setTourists] = useState<number>(initial?.tourists ?? roleDefaults.tourists);
   const [drifters, setDrifters] = useState<number>(initial?.drifters ?? roleDefaults.drifters);
 
   useEffect(() => {
-    if (!mode) return;
     const d = defaultRoles(Math.max(3, Math.min(20, totalPlayers || 3)));
-    setTourists(t => {
-      let nt = Math.min(Math.max(0, t), Math.max(0, totalPlayers - 1));
-      let nd = Math.min(Math.max(0, drifters), Math.max(0, totalPlayers - 1));
-      const nativesCount = totalPlayers - nt - nd;
-      if (nt + nd < 1 || nativesCount <= nt + nd) return d.tourists;
-      return nt;
-    });
-    setDrifters(dr => {
-      let nd = Math.min(Math.max(0, dr), Math.max(0, totalPlayers - 1));
-      let nt = Math.min(Math.max(0, tourists), Math.max(0, totalPlayers - 1));
-      const nativesCount = totalPlayers - nt - nd;
-      if (nt + nd < 1 || nativesCount <= nt + nd) return d.drifters;
-      return nd;
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    setTourists(d.tourists);
+    setDrifters(d.drifters);
   }, [mode, totalPlayers]);
 
   const natives = Math.max(0, totalPlayers - tourists - drifters);
@@ -354,27 +324,23 @@ function Setup({ onStart, onBack, initial }: { onStart: (cfg: SetupConfig) => vo
 
   return (
     <>
-      <TopBar onBack={onBack} />
+      <TopBar right={<button className="ms-back" onClick={onHowTo}>How to play</button>} />
       <div className="ms-center">
         <p className="ms-kicker">Setup</p>
         <h1 className="ms-section-title" style={{fontSize:"2rem",marginBottom:16}}>Start a game</h1>
 
-        <div className="ms-grid ms-grid-2" style={{marginBottom:16}}>
-          <button className={cx("ms-card ms-mode-card", mode==="party" && "ms-card-strong")} onClick={()=>setMode("party")} style={{"--glow":"rgba(255,92,168,.22)"} as React.CSSProperties}>
-            <span className="tag ms-tag-pink">Pass the phone</span>
-            <span className="icon">🎉</span>
-            <h3>Party Mode</h3>
-            <p>Humans only. Say clues out loud, discuss, and vote together.</p>
-          </button>
-          <button className={cx("ms-card ms-mode-card", mode==="solo" && "ms-card-strong")} onClick={()=>setMode("solo")} style={{"--glow":"rgba(53,226,208,.22)"} as React.CSSProperties}>
-            <span className="tag ms-tag-cyan">Vs AI characters</span>
-            <span className="icon">🤖</span>
-            <h3>Solo Mode</h3>
-            <p>Play against randomly picked AI characters. Type clues and votes.</p>
-          </button>
-        </div>
-
-        {mode && <div className="ms-card ms-card-strong">
+        <div className="ms-card ms-card-strong">
+          <div className="ms-field" style={{ marginBottom: 16 }}>
+            <label>Mode</label>
+            <div className="ms-row" style={{ gap: 8, flexWrap: "wrap" }}>
+              <button type="button" className={cx("ms-pill", mode === "party" && "active")} onClick={() => setMode("party")}>🎉 Party</button>
+              <button type="button" className={cx("ms-pill", mode === "solo" && "active")} onClick={() => setMode("solo")}>🤖 Solo vs AI</button>
+            </div>
+            <p className="ms-muted" style={{ fontSize: ".85rem", marginTop: 8 }}>
+              {mode === "party" ? "Pass one phone around. Say clues out loud and vote together." : "Play against randomly picked AI characters. Type clues and votes."}
+            </p>
+          </div>
+          <div className="ms-divider" />
           {mode === "party" ? (
             <>
               <h3 style={{marginBottom:12}}>Players</h3>
@@ -400,18 +366,6 @@ function Setup({ onStart, onBack, initial }: { onStart: (cfg: SetupConfig) => vo
                   <button type="button" className="ms-btn ms-btn-secondary ms-btn-sm" onClick={()=>setAiCount(c=>Math.min(19,c+1))} disabled={aiCount>=19} aria-label="More AI opponents">+</button>
                 </div>
                 <p className="ms-muted" style={{fontSize:".85rem",marginTop:8}}>Random characters picked each game (up to 20 players total).</p>
-              </div>
-              <div className="ms-divider" />
-              <h3 style={{marginBottom:10}}>AI character roster</h3>
-              <p className="ms-muted" style={{fontSize:".85rem",marginBottom:12}}>You’ll face a random mix of these characters.</p>
-              <div className="ms-char-grid">
-                {CHARACTERS.map(c => (
-                  <div key={c.id} className="ms-char is-static">
-                    <span className="emoji">{c.emoji}</span>
-                    <div className="name">{c.name}</div>
-                    <div className="bio">{c.bio}</div>
-                  </div>
-                ))}
               </div>
             </>
           )}
@@ -447,6 +401,23 @@ function Setup({ onStart, onBack, initial }: { onStart: (cfg: SetupConfig) => vo
             {!rolesValid && <p style={{margin:"12px 0 0",color:"var(--ms-yellow)",fontSize:".85rem"}}>Need at least 1 infiltrator and more Natives than infiltrators.</p>}
           </div>
 
+          {mode === "solo" && (
+            <>
+              <div className="ms-divider" />
+              <h3 style={{marginBottom:10}}>AI character roster</h3>
+              <p className="ms-muted" style={{fontSize:".85rem",marginBottom:12}}>You’ll face a random mix of these characters.</p>
+              <div className="ms-char-grid">
+                {CHARACTERS.map(c => (
+                  <div key={c.id} className="ms-char is-static">
+                    <span className="emoji">{c.emoji}</span>
+                    <div className="name">{c.name}</div>
+                    <div className="bio">{c.bio}</div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
           <div className="ms-divider" />
           <div className="ms-grid ms-grid-2">
             <div className="ms-field" style={{gridColumn:"1 / -1"}}>
@@ -479,7 +450,7 @@ function Setup({ onStart, onBack, initial }: { onStart: (cfg: SetupConfig) => vo
           <div className="ms-actions">
             <button className="ms-btn ms-btn-primary" disabled={!canStart} onClick={start}>Start Misclue</button>
           </div>
-        </div>}
+        </div>
       </div>
     </>
   );

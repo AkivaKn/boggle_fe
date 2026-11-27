@@ -128,6 +128,7 @@ export const navigate = (to: string) => {
   if (current === to) return;
   window.history.pushState({}, "", to);
   window.dispatchEvent(new PopStateEvent("popstate"));
+  window.scrollTo(0, 0);
 };
 
 export const replace = (to: string) => {
@@ -135,4 +136,5 @@ export const replace = (to: string) => {
   if (current === to) return;
   window.history.replaceState({}, "", to);
   window.dispatchEvent(new PopStateEvent("popstate"));
+  window.scrollTo(0, 0);
 };
