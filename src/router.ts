@@ -4,7 +4,8 @@ export type Route =
   | "/money-ladder"
   | "/forehead-charades"
   | "/truth-or-dare"
-  | "/out-of-line";
+  | "/out-of-line"
+  | "/misclue";
 
 export type HeadSupRoute = "home" | "setup" | "howto" | "decks" | "game";
 
@@ -15,6 +16,8 @@ export type OutOfLineRoute =
   | { screen: "howto" }
   | { screen: "room"; code: string };
 
+export type MisclueRoute = "home" | "howto" | "play";
+
 const ROUTES: Route[] = [
   "/",
   "/word-grid",
@@ -22,11 +25,13 @@ const ROUTES: Route[] = [
   "/forehead-charades",
   "/truth-or-dare",
   "/out-of-line",
+  "/misclue",
 ];
 
 const FOREHEAD_PREFIX = "/forehead-charades";
 const TRUTH_OR_DARE_PREFIX = "/truth-or-dare";
 const OUT_OF_LINE_PREFIX = "/out-of-line";
+const MISCLUE_PREFIX = "/misclue";
 
 const cleanPath = (pathname: string): string =>
   pathname.replace(/\/+$/, "") || "/";
@@ -100,6 +105,22 @@ export const resolveOutOfLineRoute = (
     if (code) return { screen: "room", code };
   }
   return { screen: "home" };
+};
+
+export const isMiscluePath = (pathname: string): boolean => {
+  const clean = cleanPath(pathname);
+  return clean === MISCLUE_PREFIX || clean.startsWith(`${MISCLUE_PREFIX}/`);
+};
+
+export const resolveMisclueRoute = (pathname: string): MisclueRoute => {
+  switch (cleanPath(pathname)) {
+    case `${MISCLUE_PREFIX}/how-to-play`:
+      return "howto";
+    case `${MISCLUE_PREFIX}/play`:
+      return "play";
+    default:
+      return "home";
+  }
 };
 
 export const navigate = (to: string) => {

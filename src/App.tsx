@@ -2,14 +2,17 @@ import { useCallback, useEffect, useState } from "react";
 import BoggleApp from "./games/BoggleApp";
 import ForeheadCharadesApp from "./games/headsup/App";
 import MillionaireApp from "./games/millionaire/App";
+import MisclueApp from "./games/misclue/App";
 import OutOfLineApp from "./games/outofline/App";
 import TruthOrDareApp from "./games/truthordare/App";
 import {
   isHeadSupPath,
+  isMiscluePath,
   isOutOfLinePath,
   isTruthOrDarePath,
   navigate,
   resolveHeadSupRoute,
+  resolveMisclueRoute,
   resolveOutOfLineRoute,
   resolveRoute,
   resolveTruthOrDareRoute,
@@ -87,6 +90,14 @@ const Lobby = () => (
           accent="violet"
         />
         <GameCard
+          to="/misclue"
+          title="Misclue"
+          blurb="Spot the Tourist, catch the Drifter, and bluff your way through secret words."
+          emoji="🕵️"
+          tag="Social deduction"
+          accent="violet"
+        />
+        <GameCard
           to="/money-ladder"
           title="The Money Ladder"
           blurb="Climb fifteen rungs, use your lifelines, and chase the top prize."
@@ -129,6 +140,10 @@ export default function App() {
 
   if (isOutOfLinePath(path)) {
     return <OutOfLineApp route={resolveOutOfLineRoute(path)} />;
+  }
+
+  if (isMiscluePath(path)) {
+    return <MisclueApp route={resolveMisclueRoute(path)} />;
   }
 
   const route: Route = resolveRoute(path);
