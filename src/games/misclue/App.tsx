@@ -54,6 +54,7 @@ export default function MisclueApp({ route }: { route: MisclueRoute }) {
   const [aiBusy, setAiBusy] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [aiRetry, setAiRetry] = useState<(() => void) | null>(null);
+  const [aiTick, setAiTick] = useState(0);
   const [setupPrefill, setSetupPrefill] = useState<SetupConfig | null>(null);
   const aiLock = useRef(false);
   const stateRef = useRef(state);
@@ -75,13 +76,13 @@ export default function MisclueApp({ route }: { route: MisclueRoute }) {
     const p = currentTurnPlayer(state);
     if (state.phase === "clue" && p?.isAI) { void runAiClue(state, p); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state?.phase, state?.turnIndex, state?.round, state?.mode, aiBusy, aiError, aiRetry]);
+  }, [state?.phase, state?.turnIndex, state?.round, state?.mode, aiBusy, aiError, aiRetry, aiTick]);
 
   useEffect(() => {
     if (!state || state.mode !== "solo" || aiLock.current || aiError || aiRetry) return;
     if (state.phase === "vote") { void runAiVotesIfNeeded(state); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state?.phase, state?.voteIndex, state?.round, state?.mode, aiBusy, aiError, aiRetry]);
+  }, [state?.phase, state?.voteIndex, state?.round, state?.mode, aiBusy, aiError, aiRetry, aiTick]);
 
   useEffect(() => {
     if (!state || state.mode !== "solo" || aiLock.current || aiError || aiRetry) return;
@@ -90,7 +91,7 @@ export default function MisclueApp({ route }: { route: MisclueRoute }) {
       if (drifter?.isAI) void runAiDrifterGuess(state, drifter);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state?.phase, state?.round, state?.mode, aiBusy, aiError, aiRetry]);
+  }, [state?.phase, state?.round, state?.mode, aiBusy, aiError, aiRetry, aiTick]);
 
   const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 
@@ -103,8 +104,7 @@ export default function MisclueApp({ route }: { route: MisclueRoute }) {
       const clue = (res.clue || "").trim().slice(0, 32) || "...";
       const elapsed = Date.now() - started;
       if (elapsed < 1400) await sleep(1400 - elapsed);
-      if (res.fallback) setAiError("AI used a fallback clue (model unavailable or invalid output).");
-      else setAiError(null);
+      setAiError(null);
       setState(prev => prev ? submitClue(prev, player.seat, clue) : prev);
     } catch (e) {
       const elapsed = Date.now() - started;
@@ -118,7 +118,7 @@ export default function MisclueApp({ route }: { route: MisclueRoute }) {
         if (!p) return;
         setAiRetry(null); setAiError(null); void runAiClue(fresh, p);
       });
-    } finally { aiLock.current = false; setAiBusy(false); }
+    } finally { aiLock.current = false; setAiBusy(false); setAiTick(t => t + 1); }
   }
 
   async function runAiVotesIfNeeded(current: GameState) {
@@ -143,8 +143,7 @@ export default function MisclueApp({ route }: { route: MisclueRoute }) {
       for (let i = 0; i < results.length; i++) {
         const r = results[i];
         if (i > 0) await sleep(650);
-        if (r.fallback) setAiError("AI used a fallback vote (model unavailable or invalid output).");
-        else setAiError(null);
+        setAiError(null);
         setState(prev => {
           if (!prev || prev.phase !== "vote") return prev;
           return submitVote(prev, r.seat, r.target);
@@ -156,7 +155,7 @@ export default function MisclueApp({ route }: { route: MisclueRoute }) {
       const msg = e instanceof Error ? e.message : "AI failed";
       setAiError(msg);
       setAiRetry(() => () => { const fresh = stateRef.current; if (!fresh) return; setAiRetry(null); setAiError(null); void runAiVotesIfNeeded(fresh); });
-    } finally { aiLock.current = false; setAiBusy(false); }
+    } finally { aiLock.current = false; setAiBusy(false); setAiTick(t => t + 1); }
   }
 
   async function runAiDrifterGuess(current: GameState, drifter: Player) {
@@ -168,8 +167,7 @@ export default function MisclueApp({ route }: { route: MisclueRoute }) {
       const guess = (res.guess || "").trim().slice(0, 40) || "no idea";
       const elapsed = Date.now() - started;
       if (elapsed < 1200) await sleep(1200 - elapsed);
-      if (res.fallback) setAiError("AI used a fallback guess (model unavailable or invalid output).");
-      else setAiError(null);
+      setAiError(null);
       setState(prev => prev ? submitDrifterGuess(prev, guess) : prev);
     } catch (e) {
       const elapsed = Date.now() - started;
@@ -183,7 +181,7 @@ export default function MisclueApp({ route }: { route: MisclueRoute }) {
         if (!d) return;
         setAiRetry(null); setAiError(null); void runAiDrifterGuess(fresh, d);
       });
-    } finally { aiLock.current = false; setAiBusy(false); }
+    } finally { aiLock.current = false; setAiBusy(false); setAiTick(t => t + 1); }
   }
 
   function buildReq(current: GameState, player: Player, action: "clue" | "vote" | "drifter_guess") {
@@ -305,7 +303,7 @@ function Setup({ onStart, onHowTo, initial }: { onStart: (cfg: SetupConfig) => v
   }, [mode, totalPlayers]);
 
   const natives = Math.max(0, totalPlayers - tourists - drifters);
-  const rolesValid = totalPlayers >= 3 && totalPlayers <= 20 && tourists >= 0 && drifters >= 0 && tourists + drifters >= 1 && natives > (tourists + drifters);
+  const rolesValid = totalPlayers >= 3 && totalPlayers <= 20 && tourists >= 0 && drifters >= 0 && tourists + drifters >= 1 && natives >= (tourists + drifters);
   const canStart = rolesValid && (mode === "party" ? humans.filter(h => h.trim()).length >= 3 : humans[0]?.trim().length > 0 && aiCount >= 2);
 
   const start = () => {
@@ -386,7 +384,7 @@ function Setup({ onStart, onHowTo, initial }: { onStart: (cfg: SetupConfig) => v
                 <div className="ms-row" style={{gap:10}}>
                   <button type="button" className="ms-btn ms-btn-secondary ms-btn-sm" onClick={()=>setTourists(t=>Math.max(0,t-1))} disabled={tourists<=0 || (tourists-1)+drifters<1} aria-label="Fewer tourists">−</button>
                   <div style={{minWidth:28,textAlign:"center",fontWeight:800,fontSize:"1.05rem"}}>{tourists}</div>
-                  <button type="button" className="ms-btn ms-btn-secondary ms-btn-sm" onClick={()=>{ if (natives > tourists + drifters + 2) { setTourists(t=>t+1); } else if (drifters > 0) { setTourists(t=>t+1); setDrifters(d=>d-1); } }} disabled={natives <= (tourists + drifters + 2) && drifters <= 0} aria-label="More tourists">+</button>
+                  <button type="button" className="ms-btn ms-btn-secondary ms-btn-sm" onClick={()=>{ if (natives >= tourists + drifters + 2) { setTourists(t=>t+1); } else if (drifters > 0) { setTourists(t=>t+1); setDrifters(d=>d-1); } }} disabled={natives < (tourists + drifters + 2) && drifters <= 0} aria-label="More tourists">+</button>
                 </div>
               </div>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,padding:"10px 12px",borderRadius:14,background:"rgba(255,255,255,.03)",border:"1px solid var(--ms-line)"}}>
@@ -394,11 +392,11 @@ function Setup({ onStart, onHowTo, initial }: { onStart: (cfg: SetupConfig) => v
                 <div className="ms-row" style={{gap:10}}>
                   <button type="button" className="ms-btn ms-btn-secondary ms-btn-sm" onClick={()=>setDrifters(d=>Math.max(0,d-1))} disabled={drifters<=0 || tourists+(drifters-1)<1} aria-label="Fewer drifters">−</button>
                   <div style={{minWidth:28,textAlign:"center",fontWeight:800,fontSize:"1.05rem"}}>{drifters}</div>
-                  <button type="button" className="ms-btn ms-btn-secondary ms-btn-sm" onClick={()=>{ if (natives > tourists + drifters + 2) { setDrifters(d=>d+1); } else if (tourists > 0) { setDrifters(d=>d+1); setTourists(t=>t-1); } }} disabled={natives <= (tourists + drifters + 2) && tourists <= 0} aria-label="More drifters">+</button>
+                  <button type="button" className="ms-btn ms-btn-secondary ms-btn-sm" onClick={()=>{ if (natives >= tourists + drifters + 2) { setDrifters(d=>d+1); } else if (tourists > 0) { setDrifters(d=>d+1); setTourists(t=>t-1); } }} disabled={natives < (tourists + drifters + 2) && tourists <= 0} aria-label="More drifters">+</button>
                 </div>
               </div>
             </div>
-            {!rolesValid && <p style={{margin:"12px 0 0",color:"var(--ms-yellow)",fontSize:".85rem"}}>Need at least 1 infiltrator and more Natives than infiltrators.</p>}
+            {!rolesValid && <p style={{margin:"12px 0 0",color:"var(--ms-yellow)",fontSize:".85rem"}}>Need at least 1 infiltrator and Natives must not be outnumbered by infiltrators.</p>}
           </div>
 
           {mode === "solo" && (
