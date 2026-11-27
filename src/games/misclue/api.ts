@@ -5,11 +5,12 @@ export type AiTurnRequest = {
   characterId: string;
   seat: number;
   publicState: {
-    players: { seat: number; name: string; alive: boolean; isAi: boolean; characterId?: string }[];
+    round: number;
+    players: { seat: number; name: string; alive: boolean }[];
     clues: { seat: number; name: string; text: string }[];
     eliminated: { seat: number; name: string; role: string }[];
   };
-  privateState: { role: string; word: string };
+  privateState: { word: string; isDrifter: boolean };
   rules: { maxClueLength: number };
 };
 

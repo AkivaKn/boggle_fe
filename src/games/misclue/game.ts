@@ -10,14 +10,14 @@ export type SetupConfig = {
   mode: Mode;
   humans: { name: string }[];
   aiCount: number; // solo only
-  scoreTarget: number;
+  totalGames: number;
   categories: string[]; // empty = all
   tourists?: number;
   drifters?: number;
 };
 
 export function createGame(cfg: SetupConfig): GameState {
-  const pair = pickPair(cfg.categories);
+  const { pair, usedPairIds } = pickPair(cfg.categories);
   const totalPlayers = cfg.mode === "solo" ? 1 + cfg.aiCount : cfg.humans.length;
   const roleCfg = defaultRoles(totalPlayers);
   const setupTourists = cfg.tourists ?? roleCfg.tourists;
@@ -47,36 +47,45 @@ export function createGame(cfg: SetupConfig): GameState {
     });
   }
 
-  const turnStartSeat = randomStartSeat(players, 1);
+  const turnStartSeat = randomStartSeat(players, true);
+  const isSolo = cfg.mode === "solo";
   return {
     mode: cfg.mode,
-    phase: "reveal",
-    round: 1,
+    phase: isSolo ? "clue" : "reveal",
+    gameNumber: 1,
+    roundNumber: 1,
+    totalGames: cfg.totalGames,
     turnIndex: 0,
     turnStartSeat,
     players,
     clues: [],
     votes: [],
     voteResult: null,
+    revoteCount: 0,
     results: [],
     nativeWord: pair.native,
     touristWord: pair.tourist,
     category: pair.category,
     selectedCategories: cfg.categories,
-    scoreTarget: cfg.scoreTarget,
+    usedPairIds,
     setupTourists: actualTourists,
     setupDrifters: actualDrifters,
     winner: null,
-    revealIndex: 0,
+    matchWinners: [],
+    revealIndex: isSolo ? players.length : 0,
     voteIndex: 0,
     discussionSeconds: 90,
     message: null,
   };
 }
 
-function pickPair(categories: string[]): WordPair {
+function pickPair(categories: string[], usedIds: string[] = []): { pair: WordPair; usedPairIds: string[] } {
   const pool = categories.length ? WORD_PAIRS.filter(p => categories.includes(p.category)) : WORD_PAIRS;
-  return pick(pool.length ? pool : WORD_PAIRS);
+  const base = pool.length ? pool : WORD_PAIRS;
+  const unused = base.filter(p => !usedIds.includes(p.id));
+  const source = unused.length ? unused : base;
+  const pair = pick(source);
+  return { pair, usedPairIds: unused.length ? [...usedIds, pair.id] : [pair.id] };
 }
 
 const ROLE_TABLE: Record<number, { tourists: number; drifters: number }> = {
@@ -147,12 +156,14 @@ export function alivePlayers(state: GameState): Player[] {
 
 export function currentTurnPlayer(state: GameState): Player | null {
   const alive = alivePlayers(state);
-  return alive[state.turnIndex] ?? null;
+  if (alive.length === 0) return null;
+  const start = clueTurnIndex(state);
+  return alive[(start + state.turnIndex) % alive.length] ?? null;
 }
 
-function randomStartSeat(players: Player[], round: number): number {
+function randomStartSeat(players: Player[], avoidDrifter: boolean): number {
   const alive = players.filter(p => p.alive).sort((a,b)=>a.seat-b.seat);
-  const pool = round === 1 ? alive.filter(p => p.role !== "drifter") : alive;
+  const pool = avoidDrifter ? alive.filter(p => p.role !== "drifter") : alive;
   const pickFrom = pool.length ? pool : alive;
   return pickFrom[Math.floor(Math.random() * pickFrom.length)]?.seat ?? alive[0]?.seat ?? 1;
 }
@@ -165,11 +176,11 @@ function rotateStartSeat(players: Player[], prevSeat: number): number {
   return next.seat;
 }
 
-export function clueTurnIndex(state: Pick<GameState, "players" | "round" | "turnStartSeat">): number {
+export function clueTurnIndex(state: Pick<GameState, "players" | "gameNumber" | "roundNumber" | "turnStartSeat">): number {
   const alive = state.players.filter(p => p.alive).sort((a,b)=>a.seat-b.seat);
   if (alive.length === 0) return 0;
   let startSeat = state.turnStartSeat;
-  if (state.round === 1) {
+  if (state.gameNumber === 1 && state.roundNumber === 1) {
     const starter = alive.find(p => p.seat === startSeat);
     if (starter?.role === "drifter") {
       const safe = alive.find(p => p.role !== "drifter");
@@ -180,15 +191,10 @@ export function clueTurnIndex(state: Pick<GameState, "players" | "round" | "turn
   return idx >= 0 ? idx : 0;
 }
 
-export function firstClueTurnIndex(state: Pick<GameState, "players" | "round"> & { turnStartSeat?: number }): number {
-  return clueTurnIndex({ ...state, turnStartSeat: state.turnStartSeat ?? state.players.filter(p=>p.alive).sort((a,b)=>a.seat-b.seat)[0]?.seat ?? 1 });
-}
-
 export function advanceReveal(state: GameState): GameState {
   const next = state.revealIndex + 1;
   if (next >= state.players.length) {
-    const nextState = { ...state, revealIndex: next, phase: "clue" as const, turnIndex: 0, message: null };
-    return { ...nextState, turnIndex: firstClueTurnIndex(nextState) };
+    return { ...state, revealIndex: next, phase: "clue" as const, turnIndex: 0, message: null };
   }
   return { ...state, revealIndex: next };
 }
@@ -196,25 +202,36 @@ export function advanceReveal(state: GameState): GameState {
 export function submitClue(state: GameState, seat: number, text: string): GameState {
   if (state.phase !== "clue") return state;
   const alive = alivePlayers(state);
-  const current = alive[state.turnIndex];
+  const current = currentTurnPlayer(state);
   if (!current || current.seat !== seat) return state;
   const player = state.players.find(p => p.seat === seat);
   if (!player || !player.alive) return state;
-  const clue: Clue = { round: state.round, turn: state.clues.filter(c=>c.round===state.round).length + 1, seat, name: player.name, text: text.trim() };
+  const clue: Clue = { game: state.gameNumber, round: state.roundNumber, turn: state.clues.filter(c=>c.game===state.gameNumber && c.round===state.roundNumber).length + 1, seat, name: player.name, text: text.trim() };
   const clues = [...state.clues, clue];
   let turnIndex = state.turnIndex + 1;
   let phase: GameState["phase"] = "clue";
   let voteIndex = state.voteIndex;
   if (turnIndex >= alive.length) {
-    phase = state.mode === "party" ? "discussion" : "vote";
+    phase = state.mode === "party" ? "elimination_select" : "vote";
     turnIndex = 0;
     voteIndex = 0;
   }
   return { ...state, clues, turnIndex, phase, voteIndex, message: null };
 }
 
+export function finishClueRound(state: GameState): GameState {
+  if (state.phase !== "clue") return state;
+  return {
+    ...state,
+    phase: state.mode === "party" ? "elimination_select" : "vote",
+    turnIndex: 0,
+    voteIndex: 0,
+    message: null,
+  };
+}
+
 export function startVote(state: GameState): GameState {
-  return { ...state, phase: "vote", turnIndex: 0, voteIndex: 0, votes: state.votes.filter(v => v.round !== state.round) };
+  return { ...state, phase: "vote", turnIndex: 0, voteIndex: 0, revoteCount: 0, voteResult: null, votes: state.votes.filter(v => !(v.game===state.gameNumber && v.round===state.roundNumber)), message: null };
 }
 
 export function submitVote(state: GameState, voterSeat: number, targetSeat: number): GameState {
@@ -223,9 +240,9 @@ export function submitVote(state: GameState, voterSeat: number, targetSeat: numb
   const voter = state.players.find(p=>p.seat===voterSeat && p.alive);
   const target = state.players.find(p=>p.seat===targetSeat && p.alive);
   if (!voter || !target) return state;
-  const votes = [...state.votes.filter(v => !(v.round===state.round && v.voterSeat===voterSeat)), { round: state.round, voterSeat, targetSeat } as Vote];
+  const votes = [...state.votes.filter(v => !(v.game===state.gameNumber && v.round===state.roundNumber && v.voterSeat===voterSeat)), { game: state.gameNumber, round: state.roundNumber, voterSeat, targetSeat } as Vote];
   const alive = alivePlayers(state);
-  const roundVotes = votes.filter(v=>v.round===state.round);
+  const roundVotes = votes.filter(v=>v.game===state.gameNumber && v.round===state.roundNumber);
   if (roundVotes.length < alive.length) {
     return { ...state, votes, voteIndex: state.voteIndex + 1 };
   }
@@ -233,30 +250,60 @@ export function submitVote(state: GameState, voterSeat: number, targetSeat: numb
 }
 
 function resolveVotes(state: GameState): GameState {
-  const roundVotes = state.votes.filter(v => v.round === state.round);
+  const roundVotes = state.votes.filter(v => v.game === state.gameNumber && v.round === state.roundNumber);
   const counts = new Map<number, number>();
   for (const v of roundVotes) counts.set(v.targetSeat, (counts.get(v.targetSeat) ?? 0) + 1);
   let max = 0;
   for (const c of counts.values()) max = Math.max(max, c);
   const top = [...counts.entries()].filter(([,c]) => c === max).map(([s]) => s);
   if (top.length !== 1) {
+    if ((state.revoteCount ?? 0) < 1) {
+      return {
+        ...state,
+        votes: state.votes.filter(v => !(v.game === state.gameNumber && v.round === state.roundNumber)),
+        phase: "vote",
+        voteIndex: 0,
+        voteResult: null,
+        revoteCount: (state.revoteCount ?? 0) + 1,
+        message: "Tie vote - revote once.",
+      };
+    }
+    const tieResult: RoundResult = {
+      game: state.gameNumber,
+      round: state.roundNumber,
+      eliminatedSeat: null,
+      eliminatedRole: null,
+      winner: null,
+      summary: "Tie vote again - no one was eliminated.",
+    };
     return {
       ...state,
-      votes: [],
-      phase: "vote",
-      voteIndex: 0,
+      results: [...state.results, tieResult],
+      phase: "reveal_result",
       voteResult: null,
-      message: "Tie vote - revote!",
+      revoteCount: 0,
+      message: tieResult.summary,
     };
   }
   const eliminatedSeat = top[0];
   const countsArr = [...counts.entries()].map(([seat, votes]) => ({ seat, votes })).sort((a,b)=>b.votes-a.votes || a.seat-b.seat);
-  return {
-    ...state,
-    phase: "vote_result",
-    voteResult: { eliminatedSeat, counts: countsArr, votes: roundVotes },
-    message: null,
-  };
+  const voteResult = { eliminatedSeat, counts: countsArr, votes: roundVotes };
+  const eliminated = state.players.find(p => p.seat === eliminatedSeat) ?? null;
+  if (!eliminated) return { ...state, phase: "vote_result", voteResult, message: null };
+
+  if (eliminated.role === "drifter") {
+    const players = state.players.map(p => p.seat === eliminatedSeat ? { ...p, alive: false } : p);
+    return {
+      ...state,
+      players,
+      phase: "vote_result",
+      voteResult,
+      message: `${eliminated.name} was the Drifter! They get one guess.`,
+    };
+  }
+
+  const players = state.players.map(p => p.seat === eliminatedSeat ? { ...p, alive: false } : p);
+  return finalizeElimination({ ...state, players, voteResult, message: null }, eliminatedSeat, eliminated.role, undefined, undefined);
 }
 
 export function confirmVoteResult(state: GameState): GameState {
@@ -265,7 +312,7 @@ export function confirmVoteResult(state: GameState): GameState {
   const eliminated = state.players.find(p => p.seat === vr.eliminatedSeat) ?? null;
   if (!eliminated) return state;
   const players = state.players.map(p => p.seat === vr.eliminatedSeat ? { ...p, alive: false } : p);
-  const nextState = { ...state, players, voteResult: null, message: null };
+  const nextState = { ...state, players, message: null };
   if (eliminated.role === "drifter") {
     return { ...nextState, phase: "drifter_guess", message: `${eliminated.name} was the Drifter! They get one guess.` };
   }
@@ -273,6 +320,7 @@ export function confirmVoteResult(state: GameState): GameState {
 }
 
 export function selectElimination(state: GameState, eliminatedSeat: number): GameState {
+  if (state.phase !== "elimination_select") return state;
   const eliminated = state.players.find(p => p.seat === eliminatedSeat && p.alive) ?? null;
   if (!eliminated) return state;
   const players = state.players.map(p => p.seat === eliminatedSeat ? { ...p, alive: false } : p);
@@ -284,7 +332,7 @@ export function selectElimination(state: GameState, eliminatedSeat: number): Gam
 }
 
 export function submitDrifterGuess(state: GameState, guess: string): GameState {
-  const drifter = state.players.find(p => !p.alive && p.role === "drifter" && !state.results.find(r => r.round === state.round && r.eliminatedSeat === p.seat));
+  const drifter = state.players.find(p => !p.alive && p.role === "drifter" && !state.results.find(r => r.game === state.gameNumber && r.round === state.roundNumber && r.eliminatedSeat === p.seat));
   if (!drifter) return state;
   const correct = normalize(guess) === normalize(state.nativeWord);
   return finalizeElimination(state, drifter.seat, "drifter", guess, correct);
@@ -298,34 +346,43 @@ function finalizeElimination(state: GameState, eliminatedSeat: number, eliminate
 
   if (eliminatedRole === "drifter" && drifterCorrect) {
     winner = "drifter_steal";
-    summary = `${eliminated?.name ?? "Drifter"} guessed the Native word "${state.nativeWord}" and stole the round!`;
-    players = players.map(p => p.role === "drifter" ? { ...p, score: p.score + 2 } : p);
+    summary = `${eliminated?.name ?? "Drifter"} guessed the Native word "${state.nativeWord}" and stole the game!`;
+    players = players.map(p => p.seat === eliminatedSeat ? { ...p, score: p.score + 4 } : p);
   } else {
     if (eliminatedRole === "drifter" && drifterGuess !== undefined) {
-      summary = `${eliminated?.name ?? "Drifter"} guessed "${drifterGuess}" - wrong! The Native word was "${state.nativeWord}". `;
+      summary = `${eliminated?.name ?? "Drifter"} guessed "${drifterGuess}" - wrong. `;
     } else {
       summary = `${eliminated?.name ?? "Someone"} was eliminated and was a ${roleLabel(eliminatedRole)}. `;
     }
     winner = checkWinner(players);
     if (winner === "natives") {
-      summary += "Natives win the round!";
-      players = players.map(p => p.role === "native" ? { ...p, score: p.score + 1 } : p);
+      summary += "Natives win the game!";
+      players = players.map(p => p.role === "native" ? { ...p, score: p.score + 2 } : p);
     } else if (winner === "infiltrators") {
-      summary += "Tourists and Drifters win the round!";
-      players = players.map(p => (p.role === "tourist" || p.role === "drifter") ? { ...p, score: p.score + 1 } : p);
+      summary += "Tourists and Drifters win the game!";
+      players = players.map(p => (p.role === "tourist" || p.role === "drifter") ? { ...p, score: p.score + 2 } : p);
     } else {
       summary += "The game continues.";
     }
   }
 
+  const pointsAwarded = winner
+    ? players
+        .filter(p => (p.score - (state.players.find(sp => sp.seat === p.seat)?.score ?? 0)) !== 0)
+        .map(p => ({ seat: p.seat, points: p.score - (state.players.find(sp => sp.seat === p.seat)?.score ?? 0) }))
+    : undefined;
+
   const result: RoundResult = {
-    round: state.round, eliminatedSeat, eliminatedRole, drifterGuess, drifterCorrect, winner, summary,
+    game: state.gameNumber, round: state.roundNumber, eliminatedSeat, eliminatedRole, drifterGuess, drifterCorrect, winner, summary, pointsAwarded,
   };
   const results = [...state.results, result];
 
-  const matchWinner = getMatchWinner(players, state.scoreTarget);
-  if (winner && matchWinner) {
-    return { ...state, players, results, phase: "match_end", winner: matchWinner, message: summary };
+  if (winner) {
+    if (state.gameNumber >= state.totalGames) {
+      const matchWinners = getMatchWinners(players);
+      return { ...state, players, results, phase: "match_end", winner, matchWinners, message: summary };
+    }
+    return { ...state, players, results, phase: "reveal_result", winner, message: summary };
   }
   return { ...state, players, results, phase: "reveal_result", winner, message: summary };
 }
@@ -336,56 +393,60 @@ function checkWinner(players: Player[]): RoundResult["winner"] {
   const infiltrators = alive.filter(p => p.role === "tourist" || p.role === "drifter").length;
   if (infiltrators === 0) return "natives";
   if (infiltrators > natives) return "infiltrators";
+  if (alive.length === 2 && infiltrators === 1) return "infiltrators"; // 1v1 endgame
   return null;
 }
 
-function getMatchWinner(players: Player[], target: number): RoundResult["winner"] {
-  const nativeScore = Math.max(0, ...players.filter(p=>p.role==="native").map(p=>p.score));
-  const infScore = Math.max(0, ...players.filter(p=>p.role==="tourist"||p.role==="drifter").map(p=>p.score));
-  // simple: if any team reached target - determine by who reached. Use team max.
-  const nativeWon = players.some(p=>p.role==="native" && p.score>=target);
-  const infWon = players.some(p=>(p.role==="tourist"||p.role==="drifter") && p.score>=target);
-  if (nativeWon && infWon) return nativeScore >= infScore ? "natives" : "infiltrators";
-  if (nativeWon) return "natives";
-  if (infWon) return "infiltrators";
-  return null;
+function getMatchWinners(players: Player[]): number[] {
+  const top = Math.max(0, ...players.map(p => p.score));
+  return players.filter(p => p.score === top).map(p => p.seat);
 }
 
-export function continueAfterNoWinner(state: GameState): GameState {
+export function nextClueRound(state: GameState): GameState {
   return {
     ...state,
     phase: "clue",
-    turnIndex: clueTurnIndex({ ...state, turnStartSeat: state.turnStartSeat }),
-    votes: state.votes.filter(v => v.round !== state.round),
+    roundNumber: state.roundNumber + 1,
+    turnIndex: 0,
+    voteResult: null,
+    revoteCount: 0,
     message: null,
   };
 }
 
-export function nextRound(state: GameState): GameState {
-  const pair = pickPair(state.category ? [state.category] : []);
+export function nextGame(state: GameState): GameState {
+  const { pair, usedPairIds } = pickPair(state.selectedCategories, state.usedPairIds);
   const roles = assignRoles(state.players.length);
   const players = state.players.map((p, i) => ({
     ...p, role: roles[i], word: wordForRole(roles[i], pair), alive: true,
   }));
   const turnStartSeat = rotateStartSeat(players, state.turnStartSeat ?? players[0]?.seat ?? 1);
+  const isSolo = state.mode === "solo";
   return {
     ...state,
-    phase: "reveal",
-    round: state.round + 1,
+    phase: isSolo ? "clue" : "reveal",
+    gameNumber: state.gameNumber + 1,
+    roundNumber: 1,
     turnIndex: 0,
     turnStartSeat,
     players,
     clues: [],
     votes: [],
     voteResult: null,
+    revoteCount: 0,
+    usedPairIds,
     nativeWord: pair.native,
     touristWord: pair.tourist,
     winner: null,
-    revealIndex: 0,
+    revealIndex: isSolo ? players.length : 0,
     voteIndex: 0,
     message: null,
   };
 }
+
+// Backwards-compatible aliases during refactor
+export const continueAfterNoWinner = nextClueRound;
+export const nextRound = nextGame;
 
 export function clearRoundClues(state: GameState): GameState {
   return { ...state, clues: [], votes: [] };
